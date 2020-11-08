@@ -46,8 +46,8 @@ public class iBSV {
             // get the default adapter
             DSPortAdapter adapter = OneWireAccessProvider.getDefaultAdapter();
 
-            System.out.println("Adpater: " + adapter.getAdapterName()
-                                + "Port: " + adapter.getPortName());
+            System.out.println("Adapter: " + adapter.getAdapterName()
+                                + " Port: " + adapter.getPortName());
             System.out.println();
 
             // block adapter from other programs and threads
