@@ -65,6 +65,11 @@ public class iBSV {
                                 + adapter.canDeliverSmartPower());
 
                 /**
+                 * SESSION: Negotiate exclusive use of 1-Wire bus
+                 */
+                adapter.beginExclusive(true);
+                
+                /**
                  * LINK: connect to 1-Wire bus 
                  */
                 // clear previous search restrictions
