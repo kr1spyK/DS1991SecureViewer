@@ -3,6 +3,7 @@
 
 1W-api_*
 !owapi_1.2.zip
+docs/
 
 # Package Files #
 *.jar
