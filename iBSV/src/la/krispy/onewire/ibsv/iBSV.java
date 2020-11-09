@@ -29,7 +29,9 @@
 package la.krispy.onewire.ibsv;
 
 import com.dalsemi.onewire.OneWireAccessProvider;
+import com.dalsemi.onewire.OneWireException;
 import com.dalsemi.onewire.adapter.DSPortAdapter;
+import com.dalsemi.onewire.adapter.OneWireIOException;
 import com.dalsemi.onewire.container.OneWireContainer;
 import java.util.Enumeration;
 
@@ -39,40 +41,62 @@ import java.util.Enumeration;
 
 public class iBSV {
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, World!\n");
+
         OneWireContainer owd;
+        DSPortAdapter adapter;
+        boolean adapterdetected = false;
+        
+        while (!adapterdetected) {
+            try {
+                // get the default adapter
+                adapter = OneWireAccessProvider.getDefaultAdapter();
+                adapterdetected = adapter.adapterDetected();
 
-        try {
-            // get the default adapter
-            DSPortAdapter adapter = OneWireAccessProvider.getDefaultAdapter();
+                // clear previous search restrictions
+                adapter.setSearchAllDevices();
+                adapter.targetAllFamilies();
+                adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
 
-            System.out.println("Adapter: " + adapter.getAdapterName()
-                                + " Port: " + adapter.getPortName());
-            System.out.println();
+                System.out.println();
+                System.out.println("SecureViewer for DS1991 iButton - Java console app");
+                System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
+                                + "; Port: " + adapter.getPortName());
+                // System.out.println();
 
-            // block adapter from other programs and threads
-            adapter.beginExclusive(true);
+                System.out.println("== Adapter Port description: "
+                + adapter.getPortTypeDescription());
+                System.out.println("== Adapter support power: "
+                                + adapter.canDeliverPower());
+                System.out.println("== Adapter support smart power: "
+                                + adapter.canDeliverSmartPower());
 
-            // clear previous search restrictions
-            adapter.setSearchAllDevices();
-            adapter.targetAllFamilies();
-            adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
+                // block adapter from other programs and threads
+                adapter.beginExclusive(true);
 
-            
-            for (@SuppressWarnings("unchecked")
-                Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers();
-                        owd_enum.hasMoreElements(); ) {
-                owd = owd_enum.nextElement();
+                System.out.println("Detected 1-Wire devices:");
+                for (@SuppressWarnings("unchecked")
+                    Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers();
+                            owd_enum.hasMoreElements(); ) {
+                    owd = owd_enum.nextElement();
 
-                System.out.println(owd.getAddressAsString());
+                    System.out.printf("%-8s %n", owd.getAddressAsString());
+                }
+
+                // unblock adapter and free the port
+                adapter.endExclusive();
+                adapter.freePort();
+                
+                //Testing program running 
+                break;
             }
-
-            // unblock adapter and free the port
-            adapter.endExclusive();
-            adapter.freePort();
-        }
-        catch (Exception e) {
-            System.out.println(e);
+            catch (OneWireIOException e) {
+                System.out.println(e + "%nAdapter communication failure");
+                continue;                
+            }
+            catch (OneWireException e) {
+                System.out.println(e + "%nAdapter/Port not available.");
+                continue;
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 # Compiled class file
 *.class
 
+1W-api_*
+
 # Package Files #
 *.jar
 *.war
