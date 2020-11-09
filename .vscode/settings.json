@@ -1,6 +1,5 @@
 {
     "java.project.referencedLibraries": [
-        "lib/**/*.jar",
-        "1W-api_1.2/lib/OneWireAPI.jar"
+        "lib/**/*.jar"
     ]
 }
