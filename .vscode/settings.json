@@ -1,5 +1,6 @@
 {
     "java.project.referencedLibraries": [
-        "lib/**/*.jar"
+        "lib/**/*.jar",
+        "iBSV/lib/owapi_1.2/OneWireAPI.jar"
     ]
 }
