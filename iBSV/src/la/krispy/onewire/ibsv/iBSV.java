@@ -93,6 +93,8 @@ public class iBSV {
 
                 //     DS1991 MultiKey, family code 02 (hex).
                 adapter.targetFamily(Convert.toInt("02"));
+                owd = adapter.getFirstDeviceContainer();
+                System.out.printf("working with: %s%n", owd.getAddressAsString());
 
                 /**
                  * TRANSPORT: DS1991 only supports primative memory functions and some
