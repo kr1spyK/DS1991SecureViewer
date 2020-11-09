@@ -52,27 +52,28 @@ public class iBSV {
                 adapter = OneWireAccessProvider.getDefaultAdapter();
                 adapterdetected = adapter.adapterDetected();
 
-                // clear previous search restrictions
-                adapter.setSearchAllDevices();
-                adapter.targetAllFamilies();
-                adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
-
                 System.out.println();
                 System.out.println("SecureViewer for DS1991 iButton - Java console app");
                 System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
                                 + "; Port: " + adapter.getPortName());
-                // System.out.println();
-
-                System.out.println("== Adapter Port description: "
-                + adapter.getPortTypeDescription());
+                
                 System.out.println("== Adapter support power: "
                                 + adapter.canDeliverPower());
                 System.out.println("== Adapter support smart power: "
                                 + adapter.canDeliverSmartPower());
 
-                // block adapter from other programs and threads
-                adapter.beginExclusive(true);
+                /**
+                 * LINK: connect to 1-Wire bus 
+                 */
+                // clear previous search restrictions
+                adapter.setSearchAllDevices();
+                adapter.targetAllFamilies();
+                adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
 
+                /**
+                 * NETWORK: Device discovery and selection
+                 */
+                System.out.println();
                 System.out.println("Detected 1-Wire devices:");
                 for (@SuppressWarnings("unchecked")
                     Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers();
@@ -81,6 +82,11 @@ public class iBSV {
 
                     System.out.printf("%-8s %n", owd.getAddressAsString());
                 }
+
+                /**
+                 * TRANSPORT: DS1991 only supports primative memory functions and some
+                 * unique commands
+                 */
 
                 // unblock adapter and free the port
                 adapter.endExclusive();
