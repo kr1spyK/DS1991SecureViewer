@@ -52,11 +52,19 @@ public class iBSV {
                 adapter = OneWireAccessProvider.getDefaultAdapter();
                 adapterdetected = adapter.adapterDetected();
 
+                // clear previous search restrictions
+                adapter.setSearchAllDevices();
+                adapter.targetAllFamilies();
+                adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
+
                 System.out.println();
                 System.out.println("SecureViewer for DS1991 iButton - Java console app");
                 System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
                                 + "; Port: " + adapter.getPortName());
-                
+                // System.out.println();
+
+                System.out.println("== Adapter Port description: "
+                + adapter.getPortTypeDescription());
                 System.out.println("== Adapter support power: "
                                 + adapter.canDeliverPower());
                 System.out.println("== Adapter support smart power: "
@@ -73,11 +81,6 @@ public class iBSV {
 
                     System.out.printf("%-8s %n", owd.getAddressAsString());
                 }
-
-                /**
-                 * TRANSPORT: DS1991 only supports primative memory functions and some
-                 * unique commands
-                 */
 
                 // unblock adapter and free the port
                 adapter.endExclusive();
