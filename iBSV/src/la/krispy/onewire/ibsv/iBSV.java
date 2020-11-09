@@ -100,7 +100,7 @@ public class iBSV {
                 OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
 
                 System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
-                System.out.printf("working with: %s%n", owd.getAddressAsString());
+                System.out.printf("=== %n working with: %s%n", owd.getAddressAsString());
 
                 byte scratchpad[] = new byte[64];
 
@@ -111,6 +111,7 @@ public class iBSV {
 
                 System.out.println("Read Scratchpad:");
                 System.out.println(Convert.toHexString(onewirecontainer02.readScratchpad(), " "));
+                System.out.println(onewirecontainer02.readScratchpad());
 
                 /**
                  * TRANSPORT: DS1991 only supports primative memory functions and some
@@ -131,12 +132,12 @@ public class iBSV {
                 break;
             }
             catch (OneWireIOException e) {
-                System.out.println(e + "%nAdapter communication failure");
+                System.out.println(e + " Adapter communication failure");
                 continue;                
             }
             catch (OneWireException e) {
-                System.out.println(e + "%nAdapter/Port not available.");
-                continue;
+                System.out.println(e + " Adapter/Port not available.");
+                return;
             }
         }
     }
