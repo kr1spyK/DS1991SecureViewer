@@ -33,6 +33,8 @@ import com.dalsemi.onewire.OneWireException;
 import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.adapter.OneWireIOException;
 import com.dalsemi.onewire.container.OneWireContainer;
+import com.dalsemi.onewire.utils.Convert;
+
 import java.util.Enumeration;
 
 /**
@@ -57,9 +59,9 @@ public class iBSV {
                 System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
                                 + "; Port: " + adapter.getPortName());
                 
-                System.out.println("== Adapter support power: "
-                                + adapter.canDeliverPower());
-                System.out.println("== Adapter support smart power: "
+                System.out.println("canDeliverPower: "
+                                + adapter.canDeliverPower()
+                                + ", smart power: "
                                 + adapter.canDeliverSmartPower());
 
                 /**
@@ -80,8 +82,12 @@ public class iBSV {
                             owd_enum.hasMoreElements(); ) {
                     owd = owd_enum.nextElement();
 
-                    System.out.printf("%-8s %n", owd.getAddressAsString());
+                    String owdAddress = owd.getAddressAsString();
+                    System.out.printf("%s {%s} %n", owdAddress, owd.getName());
                 }
+
+                //     DS1991 MultiKey, family code 02 (hex).
+                adapter.targetFamily(Convert.toInt("02"));
 
                 /**
                  * TRANSPORT: DS1991 only supports primative memory functions and some
