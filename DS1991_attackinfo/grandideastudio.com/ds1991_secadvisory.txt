@@ -1,0 +1,331 @@
+
+                              @stake, Inc.
+                           www.atstake.com
+
+                          Security Advisory
+
+Advisory Name: DS1991 MultiKey iButton Dictionary Attack Vulnerability
+ Release Date: 01/18/2001
+  Application: N/A
+     Platform: Dallas Semiconductor DS1991 (DS1425) MultiKey iButton
+     Severity: An attacker can perform a dictionary attack
+               against the DS1991 to determine the password used to
+               protect the data within the device.
+       Author: Kingpin [kingpin@atstake.com]
+Vendor Status: Vendor has documented solution information for their
+               customers.
+    Full Text: www.atstake.com/research/advisories/2001/a011801-1.txt
+
+
+Executive Summary:
+
+    Dallas Semiconductor's iButton (http://www.ibutton.com) devices are
+hardware tokens deployed globally in applications such as cashless
+transactions, stored-value debit/electronic wallets, software copyright
+protection, user authentication, and access control. Each dime-sized
+device contains a 64-bit unique identifier and various sizes of memory
+storage.
+
+    The DS1991 makes use of three distinct passwords to protect three
+secure data areas within the device. The discovered vulnerability,
+detailed in this advisory, potentially allows an attacker to determine
+the passwords used to protect these secure areas, thus gaining access
+to the protected data. Depending on the application, such data could
+include financial information, data representing monetary units, or
+user registration/identification information.
+
+    It is likely that application developers are using the same
+passwords across all devices in their implementation with the false
+confidence that the passwords can not be discovered. This advisory
+will help developers to assess the risks of their particular password
+management scheme.
+
+
+Overview:
+
+    The DS1991 contains 1,152 bits of non-volatile memory split into
+three 384-bit (48-byte) containers known as "subkeys". Each subkey is
+protected by an independent 8-byte password. Only the correct password
+will grant access to the data stored within each subkey area and return
+the 48-bytes of data. If an incorrect password is given, the DS1991
+will return 48-bytes of "random" data intended to prevent an attacker
+from comparing it against a known constant value.
+
+    Dallas Semiconductor marketing literature (http://www.ibutton.com/
+software/softauth/feature.html) claims that:
+
+        "False passwords written to the DS1991 will automatically
+         invoke a random number generator (contained in the iButton)
+         that replies with false responses. This eliminates attempts
+         to break security by pattern association. Conventional
+         protection devices do not support this feature."
+
+    It was determined that the data returned on an incorrect password
+attempt is not random at all and is calculated based on the input
+password and a constant block of data stored within the DS1991 device.
+The returned data has no correlation to the actual valid password, which
+is stored in memory internal to the DS1991 device. The constant block of
+data, which is a 12kB array containing 256 entries of 48-bytes in length
+each, is constant between all DS1991 devices and has no relation to the
+actual contents of the subkey memory areas.
+
+    By precomputing the 48-byte return value expected for an incorrect
+password attempt, it is possible to determine if a correct password was
+entered. This is due to the fact that the data returned by the DS1991
+device will be the actual subkey data not the precomputed value.
+Details of this process can be found below and in the source code for
+the proof-of-concept tool described in a later section.
+
+    Each password access attempt requires communication with the DS1991
+device and takes 0.116 seconds on a Pentium III using the DS9097U-009
+Universal Serial Port Adapter. Due to the slow transaction time, which
+is limited by the computational speed of the DS1991 and the bus speed
+of its 1-Wire Interface, it is not possible to perform an exhaustive
+brute-force of the entire 64-bit password keyspace or the keyspace of
+only ASCII-printable characters (which would require approximately
+22,406,645 years). However, it is still possible to perform a dict-
+ionary attack against the device using a list of commonly used
+passwords.
+
+    If the same password is used in every DS1991 deployed in a
+particular system and the system is designed to be in service for a
+number of years (e.g. transit authority or banking industry), a
+distributed attack using multiple computers and DS1991 devices is
+practical over a long period of time and would likely render the
+system insecure.
+
+
+Detailed Description:
+
+    By comparing the 48-byte "random" device responses of various known
+incorrect passwords, it was determined that they are computed in the
+following fashion:
+
+    Let A_j be the jth byte of A, the 8-byte password
+                   (padded with 0x20 if less than 8-bytes)
+
+    Let B_k be the kth entry of B, the 12kB constant block
+                   (256 entries each 48-bytes in length)
+
+    Let C_m be the mth byte of C, the 48-byte response
+                   (initialized to 0x00)
+
+    for (j = 0; j < 8; ++j) // For each remaining character in p/w
+    {
+	for (m = 0; m < 48; ++m) // For each byte in the response
+        {
+	    if (m + j < 48) // Catch overflow above 48-bytes long
+            {
+               k = A_j; // Perform a look-up into the constant block
+                        // based on the jth byte of the password
+               C_(m + j) ^= B_k;  // XOR the response with the value
+                                  // of the constant block
+                                  // (shifted j bytes)
+            }
+        }
+     }
+
+    An additional step is taken if the last character of the password
+(A_7) is signed (greater than 0x7F). If this is the case, the pre-
+computed subkey value is XOR'ed against another constant block
+containing 128 entries of 48-bytes in length each.
+
+
+Example:
+
+    In the interest of space, we will only look at the first 16-bytes
+of the computed 48-byte response.
+
+    Let A = "hello   " = 68 65 6C 6C 6F 20 20 20
+
+    B_68 ('h') = D8 F6 57 6C AD DD CF 47 CC 05 0B 5B 9C FC 37 93 ...
+    B_65 ('e') = 03 08 DD C1 18 26 36 CF 75 65 6A D0 0F 03 51 81 ...
+    B_6C ('l') = A4 33 51 D2 20 55 32 34 D8 BF B1 29 40 03 5C 9C ...
+    B_6C ('l') = A4 33 51 D2 20 55 32 34 D8 BF B1 29 40 03 5C 9C ...
+    B_6F ('o') = 45 E0 D3 62 45 F3 33 11 57 4C 42 0C 59 03 33 98 ...
+    B_20 (' ') = E0 2B 36 F0 6D 44 EC 9F A3 D0 D5 95 E3 FE 5F 7B ...
+    B_20 (' ') = E0 2B 36 F0 6D 44 EC 9F A3 D0 D5 95 E3 FE 5F 7B ...
+    B_20 (' ') = E0 2B 36 F0 6D 44 EC 9F A3 D0 D5 95 E3 FE 5F 7B ...
+
+    D8 F6 57 6C AD DD CF 47 CC 05 0B 5B 9C FC 37 93 ...
+       03 08 DD C1 18 26 36 CF 75 65 6A D0 0F 03 51 ...
+          A4 33 51 D2 20 55 32 34 D8 BF B1 29 40 03 ...
+             A4 33 51 D2 20 55 32 34 D8 BF B1 29 40 ...
+                45 E0 D3 62 45 F3 33 11 57 4C 42 0C ...
+                   E0 2B 36 F0 6D 44 EC 9F A3 D0 D5 ...
+                      E0 2B 36 F0 6D 44 EC 9F A3 D0 ...
+                         E0 2B 36 F0 6D 44 EC 9F A3 ...
+
+    Precomputed response = All lines XOR'ed together =
+
+    D8 F5 FB 26 4B 46 03 9B CC 2E 68 82 22 F7 F3 2B ...
+
+
+    The diagram below shows the process of a dictionary attack attempt
+against the DS1991:
+
+
+  guessed password -> algorithm -> 48-byte precomputed response
+     (variable)           ^                           |
+         |                |                           |
+         |          constant block                    |
+         |             (known)                        |
+         |                                            |
+         |                                            |
+         v                                            v
+   DS1991 ReadSubkey -> 48-byte device response -> compare
+                                                      |
+                                                      |
+                                                      v
+                                   if no match, password valid
+
+
+    An example attempt is as follows:
+
+    1) Guessed password: "hello   "
+
+       Passwords less than 8 characters in length are padded with a
+       space, 0x20, as demonstrated by the "iButton Viewer"
+       application provided with TMEX SDK.
+
+    2) Precomputed response:
+
+       D8 F5 FB 26 4B 46 03 9B CC 2E 68 82 22 F7 F3 2B
+       2F A4 66 49 6B D0 97 96 13 AD 23 F4 21 12 B4 AC
+       2F 72 17 EE EA 84 A7 B8 FB 56 E7 0F C1 9F 65 40
+
+       This value will be returned by the DS1991 device if the given
+       password is incorrect. The precomputed value will always be
+       the same for any device given the same password.
+
+    3) Device response = Return value from DS1991 ReadSubkey (given
+       guessed password)
+
+    4) Compare precomputed response to device response.
+
+       If the responses match, the guessed password is incorrect.
+
+       If the responses are different, the guessed password is the
+       correct password. This is because the device is returning
+       the actual subkey data rather than the "random" data
+       normally returned for a given incorrect password.
+
+
+Temporary Solutions:
+
+1)  Employ hard-to-guess passwords. Because time constraints limit
+    the possibility of an exhaustive key space brute-force attack
+    on the DS1991 and make it vulnerable only to dictionary attacks,
+    using passwords that are not in a common dictionary will
+    dramatically increase the security of the subkey data. The
+    password should be 8 characters in length and contain extended
+    characters such as:
+
+    ! @ # $ % ^ & * ( ) - _ = + [ ] { } \ | : ; " ' < > , . / ?
+
+2)  Application developers using the DS1991 may want to perform
+    additional obfuscation of the actual password at the
+    application-level before it is stored into the device. A dict-
+    ionary attack against the DS1991 is possible because we assume
+    the password stored in the device is equivalent to the actual
+    ASCII password. Additional obfuscation, such as the hashing of
+    passwords or integrating the iButton's 64-bit unique
+    registration number, will increase the difficulty of a
+    successful attack.
+
+3)  If the application developer controls the use of the subkey
+    passwords (as opposed to the end-user), they should ensure
+    that the passwords are not constant across all devices
+    used in their system.
+
+4)  The user should be very aware of the physical security and
+    location of the DS1991 device at all times. The owner of the
+    device should not leave it unattended or loan it to a poten-
+    tially untrustworthy colleague. This will prevent an attacker
+    from attempting to determine the legitimate user's subkey
+    passwords from the device.
+
+5)  Vendors may want to implement stronger pseudo-random or true
+    random number generation routines instead of relying on simple
+    obfuscation and transforms that can be reversed or brute-
+    forced. Poor practices lull the user into a false sense of
+    security and show a lack of concern about security from the
+    vendor.
+
+
+Vendor Response:
+
+Dallas Semiconductor has incorporated solution recommendations into
+their product literature and has communicated solution recommendations
+and these security issues to their customers.  
+
+They have also developed a new part (DS1963S) that uses a SHA based
+challenge and response sequence to authenticate a user device. With 
+this part no secret data is communicated on the data line.
+
+
+Proof-of-Concept Code:
+
+    A proof-of-concept tool has been written to demonstrate
+dictionary attacks against the DS1991 iButton. The demonstration
+performs the following actions:
+
+    1) Finds a DS1991 iButton on the default MicroLan port.
+
+    2) Given a dictionary/word file as input, calculates the
+       expected 48-byte response returned on an incorrect
+       password attempt.
+
+    3) Attempts to read subkey area #1 using password. If correct,
+       the protected subkey data is displayed. Otherwise, Step 2
+       is repeated with the next password.
+
+The program requires iButton-TMEX 32-bit drivers version 3.10 or
+newer. Source code and compiled executable for the demonstration
+tool is available from:
+
+  http://www.atstake.com/research/advisories/2001/ds1991.zip
+
+Due to copyright restrictions, Dallas Semiconductor's libraries and
+header files are not included. For further development and
+experimentation, obtain the iButton-TMEX and Developers' Tool Kit
+from:
+
+  http://www.ibutton.com/software/tmex/index.html
+
+
+<--- cut here --->
+
+E:\>ds1991 < words
+
+Dallas Semiconductor iButton DS1991 Multikey
+Dictionary Attack Demonstration Tool
+kingpin@atstake.com
+@stake Research Labs
+http://www.atstake.com/research
+
+Searching for a DS1991...
+
+Serial ROM ID: 000000008AD3C102
+
+##
+
+Password: 68 65 6C 6C 6F 20 20 20   [hello   ]
+
+Subkey Data:
+
+54 68 69 73 20 69 73 20   [This is ]
+74 68 65 20 64 61 74 61   [the data]
+20 73 74 6F 72 65 64 20   [ stored ]
+69 6E 20 53 65 63 75 72   [in Secur]
+65 20 53 75 62 6B 65 79   [e Subkey]
+20 61 72 65 61 20 23 31   [ area #1]
+
+<--- cut here --->
+
+Advisory policy: http://www.atstake.com/research/policy/
+For more advisories: http://www.atstake.com/research/advisories/
+PGP Key: http://www.atstake.com/research/pgp_key.asc
+
+Copyright 2001 @stake, Inc. All rights reserved.
+
