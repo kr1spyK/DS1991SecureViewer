@@ -97,9 +97,11 @@ public class iBSV {
             // get first DS1991 that we see, for now.
             owd = adapter.getFirstDeviceContainer();
             if(owd == null) {
+                System.out.println("No DS1991 devices found!");
                 continue;
             }
-            Long owdAddress = owd.getAddressAsLong();
+            
+            // Long owdAddress = owd.getAddressAsLong();
             OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
 
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
