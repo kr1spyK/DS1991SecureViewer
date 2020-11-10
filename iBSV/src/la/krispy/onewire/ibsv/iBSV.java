@@ -100,7 +100,7 @@ public class iBSV {
             OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
 
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
-            System.out.printf("=== %n working with: %s%n", owd.getAddressAsString());
+            System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
 
             byte scratchpad[] = new byte[64];
 
