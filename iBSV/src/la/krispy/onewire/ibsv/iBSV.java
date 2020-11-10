@@ -117,7 +117,7 @@ public class iBSV {
             System.out.println("Read Scratchpad:");
             scratchpad = onewirecontainer02.readScratchpad();
             String str = Convert.toHexString(scratchpad, " ");
-            System.out.println(hexToAscii(str, "  "));
+            System.out.println(hexToAscii(str, " "));
             System.out.println(str);
 
             /**
