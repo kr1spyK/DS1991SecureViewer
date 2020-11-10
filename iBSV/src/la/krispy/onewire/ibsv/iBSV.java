@@ -96,7 +96,12 @@ public class iBSV {
             adapter.targetFamily(Convert.toInt("02"));
             // get first DS1991 that we see, for now.
             owd = adapter.getFirstDeviceContainer();
-            Long owdAddress = owd.getAddressAsLong();
+            if(owd == null) {
+                System.out.println("No DS1991 devices found!");
+                continue;
+            }
+            
+            // Long owdAddress = owd.getAddressAsLong();
             OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
 
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
@@ -106,12 +111,14 @@ public class iBSV {
 
             // TODO: Create clear scratchpad method
             System.out.println("Clearing scratchpad...");
-            Arrays.fill(scratchpad, (byte) 0x55);
+            Arrays.fill(scratchpad, (byte) 'U');
             onewirecontainer02.writeScratchpad(00, scratchpad);
 
             System.out.println("Read Scratchpad:");
-            System.out.println(Convert.toHexString(onewirecontainer02.readScratchpad(), " "));
-            System.out.println(onewirecontainer02.readScratchpad());
+            scratchpad = onewirecontainer02.readScratchpad();
+            String str = Convert.toHexString(scratchpad, " ");
+            System.out.println(hexToAscii(str, "  "));
+            System.out.println(str);
 
             /**
              * TRANSPORT: DS1991 only supports primative memory functions and some
@@ -122,7 +129,11 @@ public class iBSV {
             /* byte[] */ scratchpad = strData.getBytes();
             onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpad);
             System.out.println("writing message to scratchpad...");
-            System.out.println(Convert.toHexString(onewirecontainer02.readScratchpad(), " "));
+
+            scratchpad = onewirecontainer02.readScratchpad();
+            str = Convert.toHexString(scratchpad, " ");
+            System.out.println(hexToAscii(str, "  "));
+            System.out.println(str);
 
             // unblock adapter and free the port
             adapter.endExclusive();
@@ -141,4 +152,19 @@ public class iBSV {
         }
     }
     }
+
+    private static String hexToAscii(String hexStr) {
+	    return hexToAscii(hexStr, "");
+    }
+    private static String hexToAscii(String hexStr, String delimiter) {
+	    StringBuilder output = new StringBuilder("");
+        hexStr = hexStr.replaceAll("\\s+", "");
+        
+	    for (int i = 0; i < hexStr.length(); i += 2) {
+	        String str = hexStr.substring(i, i + 2);
+            output.append((char) Integer.parseInt(str, 16));
+            output.append(delimiter);
+	    }
+	    return output.toString();
+	}
 }
