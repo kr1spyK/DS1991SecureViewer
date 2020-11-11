@@ -36,6 +36,7 @@ import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
+import com.dalsemi.onewire.utils.Convert.ConvertException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ import java.util.List;
 
 /**
  * We gotta do the thing. The secure iButton thing.
- */ 
+ */
 
 public class iBSV {
     public static void main(String[] args) throws Exception {
@@ -52,7 +53,7 @@ public class iBSV {
         OneWireContainer owd = null;
         DSPortAdapter adapter;
         // boolean adapterdetected = false;
-        
+
         try {
             // get the default adapter
             adapter = OneWireAccessProvider.getDefaultAdapter();
@@ -60,20 +61,17 @@ public class iBSV {
 
             System.out.println();
             System.out.println("SecureViewer for DS1991 iButton - Java console app");
-            System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
-                            + "; Port: " + adapter.getPortName()
-                            + "; canDeliverPower: "
-                            + adapter.canDeliverPower()
-                            + ", smart power: "
-                            + adapter.canDeliverSmartPower());
+            System.out.println("AdapterVersion: " + adapter.getAdapterVersion() + "; Port: " + adapter.getPortName()
+                    + "; canDeliverPower: " + adapter.canDeliverPower() + ", smart power: "
+                    + adapter.canDeliverSmartPower());
 
             /**
              * SESSION: Negotiate exclusive use of 1-Wire bus
              */
             adapter.beginExclusive(true);
-            
+
             /**
-             * LINK: connect to 1-Wire bus 
+             * LINK: connect to 1-Wire bus
              */
             // clear previous search restrictions
             adapter.setSearchAllDevices();
@@ -84,8 +82,7 @@ public class iBSV {
             System.out.println();
             System.out.println("Detected 1-Wire devices:");
             for (@SuppressWarnings("unchecked")
-                Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers();
-                        owd_enum.hasMoreElements(); ) {
+            Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers(); owd_enum.hasMoreElements();) {
                 owd = owd_enum.nextElement();
 
                 System.out.printf("%s%n", owd.toString());
@@ -97,19 +94,19 @@ public class iBSV {
             adapter.targetFamily(Convert.toInt("02"));
 
             owd = adapter.getFirstDeviceContainer();
-            if(owd == null || !Address.isValid(owd.getAddress())) {
+            if (owd == null || !Address.isValid(owd.getAddress())) {
                 System.out.println("No DS1991 devices found!");
                 return;
             }
 
             // Long owdAddress = owd.getAddressAsLong();
-            OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddress()); 
+            OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddress());
 
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
             System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
 
             byte scratchpadBuffer[] = new byte[64];
-            
+
             // Local method inits DS1991 scratchpad with 'U's
             clearScratchpad(onewirecontainer02);
 
@@ -120,13 +117,13 @@ public class iBSV {
             System.out.println(str);
 
             /**
-             * TRANSPORT: DS1991 only supports primative memory functions and some
-             * unique commands
+             * TRANSPORT: DS1991 only supports primative memory functions and some unique
+             * commands
              */
             // Writing scratchpad takes int starting address (0x00 to 0x3F) & byte[] data.
             String strData = "The quest for hot dogs is on";
             scratchpadBuffer = strData.getBytes();
-            
+
             onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
             System.out.println("writing message to scratchpad...");
 
@@ -141,24 +138,22 @@ public class iBSV {
             // unblock adapter and free the port
             adapter.endExclusive();
             adapter.freePort();
-            
-            //Testing program running 
-        }
-        catch (OneWireIOException e) {
-            System.out.println(e + " Adapter communication failure");                
-        }
-        catch (OneWireException e) {
+
+            // Testing program running
+        } catch (OneWireIOException e) {
+            System.out.println(e + " Adapter communication failure");
+        } catch (OneWireException e) {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
     }
 
-    // DS1991 command structure, three bytes: [command|address|inverse address] 
-    // readSubKey:   [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
-    private static List<Byte[]> getSubkeyNames (OneWireContainer02 onewirecontainer02) 
-                                throws OneWireException, OneWireIOException {
+    // DS1991 command structure, three bytes: [command|address|inverse address]
+    // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
+    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02)
+            throws OneWireException, OneWireIOException {
         List<Byte[]> idList = new ArrayList<>(3);
-        
+
         byte[] addy = onewirecontainer02.getAddress();
         DSPortAdapter adapter = onewirecontainer02.getAdapter();
 
@@ -168,13 +163,23 @@ public class iBSV {
             }
             if (adapter.isPresent(addy)) { // confirm presence()
                 adapter.select(addy); // <---match ROM command [0x55]
-                // memory function //<--- 0x66 read subkey
-                    // <--Master Tx command byte
+                
+                try {
+                    // memory function 0x66 read subkey
+                    // adapter.putByte(Convert.toInt("66"));// <--Master Tx command byte
+                    // construct string based on i loop for three subkeys
+                    int secondbyte = Integer.parseInt("00010000");
                     // <--Master Tx subkey&address
-                    // <--Master Tx inverted addresses byte
+                    // adapter.putByte(Convert.toInt(/**str */));
+                    // adapter.putByte(arg0);// <--Master Tx inverted addresses byte
                     // get 8 byte ID field
-                    // byte[] dataBlock = new byte[8];
+                    byte[] dataBlock = new byte[8];
                     // getBlock(dataBlock, 8) // <--Rx subkeyIDs
+                } catch (ConvertException e) {
+                    e.printStackTrace();
+                }
+                 
+                   
             }; 
             
             // idList.add(dataBlock);
