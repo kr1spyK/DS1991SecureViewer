@@ -36,7 +36,6 @@ import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Convert;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Enumeration;
 
@@ -49,13 +48,12 @@ public class iBSV {
 
         OneWireContainer owd;
         DSPortAdapter adapter;
-        boolean adapterdetected = false;
+        // boolean adapterdetected = false;
         
-    while (!adapterdetected) {
         try {
             // get the default adapter
             adapter = OneWireAccessProvider.getDefaultAdapter();
-            adapterdetected = adapter.adapterDetected();
+            // adapterdetected = adapter.adapterDetected();
 
             System.out.println();
             System.out.println("SecureViewer for DS1991 iButton - Java console app");
@@ -99,7 +97,7 @@ public class iBSV {
             owd = adapter.getFirstDeviceContainer();
             if(owd == null) {
                 System.out.println("No DS1991 devices found!");
-                continue;
+                return;
             }
 
             // Long owdAddress = owd.getAddressAsLong();
@@ -118,7 +116,7 @@ public class iBSV {
             System.out.println("Read Scratchpad:");
             scratchpad = onewirecontainer02.readScratchpad();
             String str = Convert.toHexString(scratchpad, " ");
-            System.out.println(hexToAscii(str, " "));
+            System.out.println("[" + hexToAscii(str) + "]");
             System.out.println(str);
 
             /**
@@ -132,9 +130,10 @@ public class iBSV {
             onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpad);
             System.out.println("writing message to scratchpad...");
 
+            System.out.println("Read Scratchpad:");
             scratchpad = onewirecontainer02.readScratchpad();
             str = Convert.toHexString(scratchpad, " ");
-            System.out.println(hexToAscii(str, "  "));
+            System.out.println("[" + hexToAscii(str) + "]");
             System.out.println(str);
 
             // unblock adapter and free the port
@@ -142,17 +141,14 @@ public class iBSV {
             adapter.freePort();
             
             //Testing program running 
-            break;
         }
         catch (OneWireIOException e) {
-            System.out.println(e + " Adapter communication failure");
-            continue;                
+            System.out.println(e + " Adapter communication failure");                
         }
         catch (OneWireException e) {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
-    }
     }
 
     // Takes hex coded string and converts printable values to symbols.
