@@ -2,5 +2,8 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "iBSV/lib/owapi_1.2/OneWireAPI.jar"
-    ]
+    ],
+    "files.associations": {
+        "TDS1991.C": "cpp"
+    }
 }

@@ -36,6 +36,7 @@ import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Convert;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Enumeration;
 
@@ -100,7 +101,7 @@ public class iBSV {
                 System.out.println("No DS1991 devices found!");
                 continue;
             }
-            
+
             // Long owdAddress = owd.getAddressAsLong();
             OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
 
@@ -126,7 +127,8 @@ public class iBSV {
              */
             // Writing scratchpad takes int starting address (0x00 to 0x3F) & byte[] data.
             String strData = "The quest for hot dogs is on";
-            /* byte[] */ scratchpad = strData.getBytes();
+            scratchpad = strData.getBytes();
+            
             onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpad);
             System.out.println("writing message to scratchpad...");
 
@@ -153,6 +155,7 @@ public class iBSV {
     }
     }
 
+    // Takes hex coded string and converts printable values to symbols.
     private static String hexToAscii(String hexStr) {
 	    return hexToAscii(hexStr, "");
     }
@@ -161,8 +164,14 @@ public class iBSV {
         hexStr = hexStr.replaceAll("\\s+", "");
         
 	    for (int i = 0; i < hexStr.length(); i += 2) {
-	        String str = hexStr.substring(i, i + 2);
-            output.append((char) Integer.parseInt(str, 16));
+            String str = hexStr.substring(i, i + 2);
+            int thebyte = Integer.parseInt(str, 16);
+
+            if (Character.isISOControl((char) thebyte)) {
+                output.append(str);
+            } else {
+                output.append((char) thebyte);
+            }
             output.append(delimiter);
 	    }
 	    return output.toString();
