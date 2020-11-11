@@ -58,9 +58,8 @@ public class iBSV {
             System.out.println();
             System.out.println("SecureViewer for DS1991 iButton - Java console app");
             System.out.println("AdapterVersion: " + adapter.getAdapterVersion()
-                            + "; Port: " + adapter.getPortName());
-            
-            System.out.println("canDeliverPower: "
+                            + "; Port: " + adapter.getPortName()
+                            + "; canDeliverPower: "
                             + adapter.canDeliverPower()
                             + ", smart power: "
                             + adapter.canDeliverSmartPower());
@@ -75,8 +74,6 @@ public class iBSV {
              */
             // clear previous search restrictions
             adapter.setSearchAllDevices();
-            adapter.targetAllFamilies();
-            adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
 
             /**
              * NETWORK: Device discovery and selection
@@ -90,10 +87,12 @@ public class iBSV {
 
                 System.out.printf("%s%n", owd.toString());
             }
+            System.out.println();
 
-            //     DS1991 MultiKey, family code 02 (hex).
+            adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
+            // find first DS1991 (family code 0x02).
             adapter.targetFamily(Convert.toInt("02"));
-            // get first DS1991 that we see, for now.
+
             owd = adapter.getFirstDeviceContainer();
             if(owd == null) {
                 System.out.println("No DS1991 devices found!");
@@ -106,16 +105,16 @@ public class iBSV {
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
             System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
 
-            byte scratchpad[] = new byte[64];
+            byte scratchpadBuffer[] = new byte[64];
 
             // TODO: Create clear scratchpad method
             System.out.println("Clearing scratchpad...");
-            Arrays.fill(scratchpad, (byte) 'U');
-            onewirecontainer02.writeScratchpad(00, scratchpad);
+            Arrays.fill(scratchpadBuffer, (byte) 'U');
+            onewirecontainer02.writeScratchpad(00, scratchpadBuffer);
 
             System.out.println("Read Scratchpad:");
-            scratchpad = onewirecontainer02.readScratchpad();
-            String str = Convert.toHexString(scratchpad, " ");
+            scratchpadBuffer = onewirecontainer02.readScratchpad();
+            String str = Convert.toHexString(scratchpadBuffer, " ");
             System.out.println("[" + hexToAscii(str) + "]");
             System.out.println(str);
 
@@ -125,14 +124,14 @@ public class iBSV {
              */
             // Writing scratchpad takes int starting address (0x00 to 0x3F) & byte[] data.
             String strData = "The quest for hot dogs is on";
-            scratchpad = strData.getBytes();
+            scratchpadBuffer = strData.getBytes();
             
-            onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpad);
+            onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
             System.out.println("writing message to scratchpad...");
 
             System.out.println("Read Scratchpad:");
-            scratchpad = onewirecontainer02.readScratchpad();
-            str = Convert.toHexString(scratchpad, " ");
+            scratchpadBuffer = onewirecontainer02.readScratchpad();
+            str = Convert.toHexString(scratchpadBuffer, " ");
             System.out.println("[" + hexToAscii(str) + "]");
             System.out.println(str);
 
@@ -149,6 +148,10 @@ public class iBSV {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
+    }
+
+    private static void clearScratchpad(OneWireContainer02 odc) {
+
     }
 
     // Takes hex coded string and converts printable values to symbols.
