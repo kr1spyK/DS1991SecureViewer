@@ -4,6 +4,9 @@
 1W-api_*
 !owapi_1.2.zip
 !ibutton_tool.zip
+DS1991_attackinfo/grandideastudio.com/ibutton_tool/DS1991.exe
+DS1991_attackinfo/grandideastudio.com/ibutton_tool/TDS1991.C
+DS1991_attackinfo/grandideastudio.com/ibutton_tool/words
 docs/
 
 # Package Files #
@@ -36,6 +39,4 @@ docs/
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-DS1991_attackinfo/grandideastudio.com/ibutton_tool/DS1991.exe
-DS1991_attackinfo/grandideastudio.com/ibutton_tool/TDS1991.C
-DS1991_attackinfo/grandideastudio.com/ibutton_tool/words
+
