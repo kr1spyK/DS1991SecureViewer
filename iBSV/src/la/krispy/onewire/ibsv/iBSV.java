@@ -34,10 +34,12 @@ import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.adapter.OneWireIOException;
 import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
+import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
 
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * We gotta do the thing. The secure iButton thing.
@@ -46,7 +48,7 @@ import java.util.Enumeration;
 public class iBSV {
     public static void main(String[] args) throws Exception {
 
-        OneWireContainer owd;
+        OneWireContainer owd = null;
         DSPortAdapter adapter;
         // boolean adapterdetected = false;
         
@@ -94,13 +96,13 @@ public class iBSV {
             adapter.targetFamily(Convert.toInt("02"));
 
             owd = adapter.getFirstDeviceContainer();
-            if(owd == null) {
+            if(owd == null || !Address.isValid(owd.getAddress())) {
                 System.out.println("No DS1991 devices found!");
                 return;
             }
 
             // Long owdAddress = owd.getAddressAsLong();
-            OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddressAsLong()); 
+            OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddress()); 
 
             System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
             System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
@@ -146,6 +148,32 @@ public class iBSV {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
+    }
+
+    // DS1991 command structure, three bytes: [command|address|inverse address] 
+    // readSubKey:   [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
+    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02) {
+        List<Byte[]> DS1991SubkeyNames = null;
+        
+        byte[] addy = onewirecontainer02.getAddress();
+        DSPortAdapter adapter = onewirecontainer02.getAdapter();
+
+        // for (int i = 0; i < 3; --i) {
+            // reset()
+            // confirm presence()
+            // select()
+                // match ROM command [0x55]
+                    // Master Tx bit 0
+            // memory function
+                // Master Tx command byte
+                // Master Tx subkey&address
+                // Master Tx inverted addresses byte
+                // Rx subkeyIDs
+            // Reset
+        // }
+        // Reset
+
+        return DS1991SubkeyNames;
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
