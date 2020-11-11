@@ -37,6 +37,7 @@ import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
@@ -135,6 +136,8 @@ public class iBSV {
             System.out.println("[" + hexToAscii(str) + "]");
             System.out.println(str);
 
+            getSubkeyNames(onewirecontainer02);
+
             // unblock adapter and free the port
             adapter.endExclusive();
             adapter.freePort();
@@ -152,28 +155,35 @@ public class iBSV {
 
     // DS1991 command structure, three bytes: [command|address|inverse address] 
     // readSubKey:   [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
-    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02) {
-        List<Byte[]> DS1991SubkeyNames = null;
+    private static List<Byte[]> getSubkeyNames (OneWireContainer02 onewirecontainer02) 
+                                throws OneWireException, OneWireIOException {
+        List<Byte[]> idList = new ArrayList<>(3);
         
         byte[] addy = onewirecontainer02.getAddress();
         DSPortAdapter adapter = onewirecontainer02.getAdapter();
 
-        // for (int i = 0; i < 3; --i) {
-            // reset()
-            // confirm presence()
-            // select()
-                // match ROM command [0x55]
-                    // Master Tx bit 0
-            // memory function
-                // Master Tx command byte
-                // Master Tx subkey&address
-                // Master Tx inverted addresses byte
-                // Rx subkeyIDs
-            // Reset
-        // }
+        for (int i = 0; i < 3; --i) {
+            while (adapter.reset() != DSPortAdapter.RESET_PRESENCE) {
+                continue; // wait for adapter to update..
+            }
+            if (adapter.isPresent(addy)) { // confirm presence()
+                adapter.select(addy); // <---match ROM command [0x55]
+                // memory function //<--- 0x66 read subkey
+                    // <--Master Tx command byte
+                    // <--Master Tx subkey&address
+                    // <--Master Tx inverted addresses byte
+                    // get 8 byte ID field
+                    // byte[] dataBlock = new byte[8];
+                    // getBlock(dataBlock, 8) // <--Rx subkeyIDs
+            }; 
+            
+            // idList.add(dataBlock);
+            // Reset()
+            //
+        }
         // Reset
 
-        return DS1991SubkeyNames;
+        return idList;
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
