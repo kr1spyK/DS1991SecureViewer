@@ -106,11 +106,9 @@ public class iBSV {
             System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
 
             byte scratchpadBuffer[] = new byte[64];
-
-            // TODO: Create clear scratchpad method
-            System.out.println("Clearing scratchpad...");
-            Arrays.fill(scratchpadBuffer, (byte) 'U');
-            onewirecontainer02.writeScratchpad(00, scratchpadBuffer);
+            
+            // Local method inits DS1991 scratchpad with 'U's
+            clearScratchpad(onewirecontainer02);
 
             System.out.println("Read Scratchpad:");
             scratchpadBuffer = onewirecontainer02.readScratchpad();
@@ -150,8 +148,13 @@ public class iBSV {
         }
     }
 
-    private static void clearScratchpad(OneWireContainer02 odc) {
+    private static void clearScratchpad(OneWireContainer02 odc)
+            throws OneWireIOException, OneWireException {
+        byte buf[] = new byte[64];
 
+        System.out.println("Clearing scratchpad...");
+        Arrays.fill(buf, (byte) 'U');
+        odc.writeScratchpad(00, buf);
     }
 
     // Takes hex coded string and converts printable values to symbols.
