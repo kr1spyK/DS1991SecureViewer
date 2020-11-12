@@ -54,7 +54,6 @@ public class iBSV {
         // boolean adapterdetected = false;
 
         try {
-            // get the default adapter
             adapter = OneWireAccessProvider.getDefaultAdapter();
 
             /**
@@ -71,21 +70,13 @@ public class iBSV {
             initiBSV(adapter);
 
             OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
-
-            dumpDS1991(onewirecontainer02);
+            System.out.printf("=== %s ===%n%s%n", onewirecontainer02.getName(), onewirecontainer02.getDescription());
 
             /**
              * TRANSPORT: DS1991 only supports primative memory functions and some unique
              * commands
              */
-            // Writing scratchpad takes int starting address (0x00 to 0x3F) & byte[] data.
-            String strData = "The quest for hot dogs is on";
-            // scratchpadBuffer = strData.getBytes();
-
-            // onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
-            // System.out.println("writing message to scratchpad...");
-
-            // getSubkeyNames(onewirecontainer02);
+            dumpDS1991(onewirecontainer02);
 
             // unblock adapter and free the port
             adapter.endExclusive();
@@ -101,18 +92,27 @@ public class iBSV {
     }
 
     private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
-        System.out.printf("=== %s ===%n%s%n", onewirecontainer02.getName(), onewirecontainer02.getDescription());
+        
         System.out.printf("=== %nworking with: %s%n", onewirecontainer02.getAddressAsString());
 
         byte scratchpadBuffer[] = new byte[64];
 
-        // Local method inits DS1991 scratchpad with 'U's
-        // clearScratchpad(onewirecontainer02); // IT WORKS
         System.out.println("Read Scratchpad:");
         scratchpadBuffer = onewirecontainer02.readScratchpad();
         String str = Convert.toHexString(scratchpadBuffer, " ");
         System.out.println("[" + hexToAscii(str) + "]");
         System.out.println(str);
+
+        // getSubkeyNames(onewirecontainer02);
+        for (int i = 0; i < 3; i++) {
+            byte[] buf = new byte[64];
+            String test = "UUUUUUUU";
+            // System.out.println(Convert.toHexString(test.getBytes(), " "));
+            onewirecontainer02.readSubkey(buf, i, test.getBytes());
+            str = Convert.toHexString(buf, " ");
+            System.out.println("[" + hexToAscii(str) + "]");
+            System.out.println(str);
+        }
     }
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
@@ -151,8 +151,7 @@ public class iBSV {
 
     // DS1991 command structure, three bytes: [command|address|inverse address]
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
-    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02)
-            throws OneWireException, OneWireIOException {
+    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02) throws Exception {
         List<Byte[]> idList = new ArrayList<>(3);
 
         byte[] addy = onewirecontainer02.getAddress();
@@ -169,11 +168,10 @@ public class iBSV {
                 
                 try {
                     // memory function 0x66 read subkey
-                    // adapter.putByte(Convert.toInt("66"));// <--Master Tx command byte
+                    // adapter.putByte(Convert.toInt("66")); // <--Master Tx command byte
                     // construct string based on i loop for three subkeys
                     int secondbyte = Integer.parseInt("00010000");
-                    // <--Master Tx subkey&address
-                    // adapter.putByte(Convert.toInt(/**str */));
+                    // adapter.putByte(secondbyte); // <--Master Tx subkey&address
                     // adapter.putByte(arg0);// <--Master Tx inverted addresses byte
                     // get 8 byte ID field
                     byte[] dataBlock = new byte[8];
