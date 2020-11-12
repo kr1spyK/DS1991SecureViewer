@@ -108,8 +108,7 @@ public class iBSV {
             byte scratchpadBuffer[] = new byte[64];
 
             // Local method inits DS1991 scratchpad with 'U's
-            clearScratchpad(onewirecontainer02);
-
+            // clearScratchpad(onewirecontainer02); // IT WORKS
             System.out.println("Read Scratchpad:");
             scratchpadBuffer = onewirecontainer02.readScratchpad();
             String str = Convert.toHexString(scratchpadBuffer, " ");
@@ -124,16 +123,10 @@ public class iBSV {
             String strData = "The quest for hot dogs is on";
             scratchpadBuffer = strData.getBytes();
 
-            onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
-            System.out.println("writing message to scratchpad...");
+            // onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
+            // System.out.println("writing message to scratchpad...");
 
-            System.out.println("Read Scratchpad:");
-            scratchpadBuffer = onewirecontainer02.readScratchpad();
-            str = Convert.toHexString(scratchpadBuffer, " ");
-            System.out.println("[" + hexToAscii(str) + "]");
-            System.out.println(str);
-
-            getSubkeyNames(onewirecontainer02);
+            // getSubkeyNames(onewirecontainer02);
 
             // unblock adapter and free the port
             adapter.endExclusive();
@@ -158,9 +151,11 @@ public class iBSV {
         DSPortAdapter adapter = onewirecontainer02.getAdapter();
 
         for (int i = 0; i < 3; --i) {
-            while (adapter.reset() != DSPortAdapter.RESET_PRESENCE) {
-                continue; // wait for adapter to update..
-            }
+            // while (adapter.reset() != 1) {
+            //     System.out.println("resetting!");
+            //     continue; // wait for adapter to update..
+            // }
+            adapter.reset();
             if (adapter.isPresent(addy)) { // confirm presence()
                 adapter.select(addy); // <---match ROM command [0x55]
                 
@@ -175,16 +170,12 @@ public class iBSV {
                     // get 8 byte ID field
                     byte[] dataBlock = new byte[8];
                     // getBlock(dataBlock, 8) // <--Rx subkeyIDs
-                } catch (ConvertException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-                 
-                   
-            }; 
-            
+            } 
             // idList.add(dataBlock);
-            // Reset()
-            //
+            adapter.reset();
         }
         // Reset
 
