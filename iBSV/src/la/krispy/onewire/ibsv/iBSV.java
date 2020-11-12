@@ -36,7 +36,6 @@ import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
-import com.dalsemi.onewire.utils.Convert.ConvertException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,20 +49,13 @@ import java.util.List;
 public class iBSV {
     public static void main(String[] args) throws Exception {
 
-        OneWireContainer owd = null;
+        // OneWireContainer owd = null;
         DSPortAdapter adapter;
         // boolean adapterdetected = false;
 
         try {
             // get the default adapter
             adapter = OneWireAccessProvider.getDefaultAdapter();
-            // adapterdetected = adapter.adapterDetected();
-
-            System.out.println();
-            System.out.println("SecureViewer for DS1991 iButton - Java console app");
-            System.out.println("AdapterVersion: " + adapter.getAdapterVersion() + "; Port: " + adapter.getPortName()
-                    + "; canDeliverPower: " + adapter.canDeliverPower() + ", smart power: "
-                    + adapter.canDeliverSmartPower());
 
             /**
              * SESSION: Negotiate exclusive use of 1-Wire bus
@@ -72,48 +64,15 @@ public class iBSV {
 
             /**
              * LINK: connect to 1-Wire bus
-             */
-            // clear previous search restrictions
-            adapter.setSearchAllDevices();
-
-            /**
+             *
              * NETWORK: Device discovery and selection
              */
-            System.out.println();
-            System.out.println("Detected 1-Wire devices:");
-            for (@SuppressWarnings("unchecked")
-            Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers(); owd_enum.hasMoreElements();) {
-                owd = owd_enum.nextElement();
+            // print program header, clear previous search restrictions
+            initiBSV(adapter);
 
-                System.out.printf("%s%n", owd.toString());
-            }
-            System.out.println();
+            OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
 
-            adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
-            // find first DS1991 (family code 0x02).
-            adapter.targetFamily(Convert.toInt("02"));
-
-            owd = adapter.getFirstDeviceContainer();
-            if (owd == null || !Address.isValid(owd.getAddress())) {
-                System.out.println("No DS1991 devices found!");
-                return;
-            }
-
-            // Long owdAddress = owd.getAddressAsLong();
-            OneWireContainer02 onewirecontainer02 = new OneWireContainer02(adapter, owd.getAddress());
-
-            System.out.printf("=== %s ===%n%s%n", owd.getName(), owd.getDescription());
-            System.out.printf("=== %nworking with: %s%n", owd.getAddressAsString());
-
-            byte scratchpadBuffer[] = new byte[64];
-
-            // Local method inits DS1991 scratchpad with 'U's
-            // clearScratchpad(onewirecontainer02); // IT WORKS
-            System.out.println("Read Scratchpad:");
-            scratchpadBuffer = onewirecontainer02.readScratchpad();
-            String str = Convert.toHexString(scratchpadBuffer, " ");
-            System.out.println("[" + hexToAscii(str) + "]");
-            System.out.println(str);
+            dumpDS1991(onewirecontainer02);
 
             /**
              * TRANSPORT: DS1991 only supports primative memory functions and some unique
@@ -121,7 +80,7 @@ public class iBSV {
              */
             // Writing scratchpad takes int starting address (0x00 to 0x3F) & byte[] data.
             String strData = "The quest for hot dogs is on";
-            scratchpadBuffer = strData.getBytes();
+            // scratchpadBuffer = strData.getBytes();
 
             // onewirecontainer02.writeScratchpad(Convert.toInt("00"), scratchpadBuffer);
             // System.out.println("writing message to scratchpad...");
@@ -139,6 +98,55 @@ public class iBSV {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
+    }
+
+    private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
+        System.out.printf("=== %s ===%n%s%n", onewirecontainer02.getName(), onewirecontainer02.getDescription());
+        System.out.printf("=== %nworking with: %s%n", onewirecontainer02.getAddressAsString());
+
+        byte scratchpadBuffer[] = new byte[64];
+
+        // Local method inits DS1991 scratchpad with 'U's
+        // clearScratchpad(onewirecontainer02); // IT WORKS
+        System.out.println("Read Scratchpad:");
+        scratchpadBuffer = onewirecontainer02.readScratchpad();
+        String str = Convert.toHexString(scratchpadBuffer, " ");
+        System.out.println("[" + hexToAscii(str) + "]");
+        System.out.println(str);
+    }
+
+    private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
+
+         // find first DS1991 (family code 0x02).
+         adapter.targetFamily(Convert.toInt("02"));
+         OneWireContainer owd = adapter.getFirstDeviceContainer();
+            if (owd == null || !Address.isValid(owd.getAddress())) {
+                // System.out.println("No DS1991 devices found!");
+                OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
+				throw e;
+            }
+
+        return new OneWireContainer02(adapter, owd.getAddress());
+    }
+
+    private static void initiBSV(DSPortAdapter adapter) throws OneWireIOException, OneWireException {
+        System.out.println();
+        System.out.println("SecureViewer for DS1991 iButton - Java console app");
+        System.out.println("AdapterVersion: " + adapter.getAdapterVersion() + "; Port: " + adapter.getPortName()
+                + "; canDeliverPower: " + adapter.canDeliverPower() + ", smart power: "
+                + adapter.canDeliverSmartPower());
+
+        adapter.setSearchAllDevices();
+        adapter.setSpeed(DSPortAdapter.SPEED_REGULAR);
+
+        System.out.println("Detected 1-Wire devices:");
+        for (@SuppressWarnings("unchecked")
+        Enumeration<OneWireContainer> owd_enum = adapter.getAllDeviceContainers(); owd_enum.hasMoreElements();) {
+            OneWireContainer owd = owd_enum.nextElement();
+
+            System.out.printf("%s%n", owd.toString());
+        }
+        System.out.println();
     }
 
     // DS1991 command structure, three bytes: [command|address|inverse address]
