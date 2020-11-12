@@ -103,16 +103,8 @@ public class iBSV {
         System.out.println("[" + hexToAscii(str) + "]");
         System.out.println(str);
 
-        // getSubkeyNames(onewirecontainer02);
-        for (int i = 0; i < 3; i++) {
-            byte[] buf = new byte[64];
-            String test = "UUUUUUUU";
-            // System.out.println(Convert.toHexString(test.getBytes(), " "));
-            onewirecontainer02.readSubkey(buf, i, test.getBytes());
-            str = Convert.toHexString(buf, " ");
-            System.out.println("[" + hexToAscii(str) + "]");
-            System.out.println(str);
-        }
+        getSubkeys(onewirecontainer02);
+        
     }
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
@@ -151,41 +143,26 @@ public class iBSV {
 
     // DS1991 command structure, three bytes: [command|address|inverse address]
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
-    private static List<Byte[]> getSubkeyNames(OneWireContainer02 onewirecontainer02) throws Exception {
+    private static List<Byte[]> getSubkeys(OneWireContainer02 onewirecontainer02) throws Exception {
         List<Byte[]> idList = new ArrayList<>(3);
 
-        byte[] addy = onewirecontainer02.getAddress();
-        DSPortAdapter adapter = onewirecontainer02.getAdapter();
-
-        for (int i = 0; i < 3; --i) {
-            // while (adapter.reset() != 1) {
-            //     System.out.println("resetting!");
-            //     continue; // wait for adapter to update..
-            // }
-            adapter.reset();
-            if (adapter.isPresent(addy)) { // confirm presence()
-                adapter.select(addy); // <---match ROM command [0x55]
-                
-                try {
-                    // memory function 0x66 read subkey
-                    // adapter.putByte(Convert.toInt("66")); // <--Master Tx command byte
-                    // construct string based on i loop for three subkeys
-                    int secondbyte = Integer.parseInt("00010000");
-                    // adapter.putByte(secondbyte); // <--Master Tx subkey&address
-                    // adapter.putByte(arg0);// <--Master Tx inverted addresses byte
-                    // get 8 byte ID field
-                    byte[] dataBlock = new byte[8];
-                    // getBlock(dataBlock, 8) // <--Rx subkeyIDs
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } 
-            // idList.add(dataBlock);
-            adapter.reset();
+        System.out.println("read SubKeys:");
+        for (int i = 0; i < 3; i++) {
+            displaySubkeys(onewirecontainer02, i);
         }
-        // Reset
 
         return idList;
+    }
+
+    private static void displaySubkeys(OneWireContainer02 onewirecontainer02, int key) throws Exception {
+        byte[] buf = new byte[64];
+            String defaultPW = "UUUUUUUU"; // hardcoded default password
+            onewirecontainer02.readSubkey(buf, key, defaultPW.getBytes());
+            String hexStr = Convert.toHexString(buf, " ");
+            String printStr = hexToAscii(hexStr);
+            System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + printStr.substring(8, 16));
+            System.out.println("[" + printStr.substring(16, printStr.length()) + "]");
+            System.out.println(hexStr);
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
