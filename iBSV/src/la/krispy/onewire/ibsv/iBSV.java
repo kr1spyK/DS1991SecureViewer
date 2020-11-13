@@ -157,12 +157,23 @@ public class iBSV {
     private static void displaySubkeys(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
             String defaultPW = "UUUUUUUU"; // hardcoded default password
-            onewirecontainer02.readSubkey(buf, key, defaultPW.getBytes());
+            Long alma = Long.decode("0x0909240304031901");
+            // System.out.println(alma);
+            onewirecontainer02.readSubkey(buf, key, Convert.toByteArray(alma));
             String hexStr = Convert.toHexString(buf, " ");
             String printStr = hexToAscii(hexStr);
-            System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + printStr.substring(8, 16));
-            System.out.println("[" + printStr.substring(16, printStr.length()) + "]");
+            // getSubkeyheader(buf);
+            // System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + "");
+            // System.out.println("[" + printStr.substring(16, printStr.length()) + "]");
+            // System.out.println("[" + hexStr + "]");
             System.out.println(hexStr);
+    }
+
+    private static void getSubkeyheader(byte[] buf) {
+        for(int i = 0; i < 8; i++) {
+            System.out.print(buf[i]);
+        }
+        System.out.println();
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
