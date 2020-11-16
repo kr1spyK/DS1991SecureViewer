@@ -56,25 +56,21 @@ public class iBSV {
         try {
             adapter = OneWireAccessProvider.getDefaultAdapter();
 
-            /**
-             * SESSION: Negotiate exclusive use of 1-Wire bus
-             */
+            // SESSION: Negotiate exclusive use of 1-Wire bus
             adapter.beginExclusive(true);
-
             /**
              * LINK: connect to 1-Wire bus
-             *
              * NETWORK: Device discovery and selection
              */
             // print program header, clear previous search restrictions
             initiBSV(adapter);
 
+            // We will focus on a single device (DS1991 family).
             OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
-            System.out.printf("=== %s ===%n%s%n", onewirecontainer02.getName(), onewirecontainer02.getDescription());
-
+            System.out.printf("=== %s ===%n%s%n===        ===%n", onewirecontainer02.getName(), 
+                                onewirecontainer02.getDescription());
             /**
-             * TRANSPORT: DS1991 only supports primative memory functions and some unique
-             * commands
+             * TRANSPORT: DS1991 only supports primative memory functions and some unique commands
              */
             dumpDS1991(onewirecontainer02);
 
@@ -93,7 +89,7 @@ public class iBSV {
 
     private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
         
-        System.out.printf("=== %nworking with: %s%n", onewirecontainer02.getAddressAsString());
+        System.out.printf("working with: %s%n", onewirecontainer02.getAddressAsString());
 
         byte scratchpadBuffer[] = new byte[64];
 
@@ -104,7 +100,6 @@ public class iBSV {
         System.out.println(str);
 
         getSubkeys(onewirecontainer02);
-        
     }
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
@@ -141,8 +136,6 @@ public class iBSV {
         System.out.println();
     }
 
-    // DS1991 command structure, three bytes: [command|address|inverse address]
-    // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static List<Byte[]> getSubkeys(OneWireContainer02 onewirecontainer02) throws Exception {
         List<Byte[]> idList = new ArrayList<>(3);
 
@@ -154,6 +147,8 @@ public class iBSV {
         return idList;
     }
 
+    // DS1991 command structure, three bytes: [command|address|inverse address]
+    // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
         String defaultPW = "UUUUUUUU"; // hardcoded default password
@@ -162,15 +157,22 @@ public class iBSV {
 
         Long alma = Long.decode(passi);
         defaultPW = Convert.toHexString(defaultPW.getBytes());
-        // System.out.println(alma);
+        // pawg = toByteArray(defaultPW or alma)
         byte[] pawg = Convert.toByteArray(alma);
         onewirecontainer02.readSubkey(buf, key, pawg);
 
         String hexStr = Convert.toHexString(buf, " ");
-        String printStr = hexToAscii(hexStr);
+        // String printStr = hexToAscii(hexStr);
 
         getSubkeyheader(Convert.toHexString(buf));
-        System.out.println(hexStr);
+        printResponse(hexStr, 1);
+    }
+
+    private static void printResponse(String hexString, int printAsBlock) {
+        if (printAsBlock != 0) {
+            hexString = hexString.replaceAll("(.{24})", "$1\n");
+        }
+        System.out.printf("%s%n%n", hexString);
     }
 
     private static void getSubkeyheader(String str) {
@@ -188,7 +190,7 @@ public class iBSV {
         odc.writeScratchpad(00, buf);
     }
 
-    // Takes hex coded string and converts printable values to symbols.
+    // Takes hex coded string and converts printable values to symbols, otherwise keep hex value.
     private static String hexToAscii(String hexStr) {
 	    return hexToAscii(hexStr, "");
     }
