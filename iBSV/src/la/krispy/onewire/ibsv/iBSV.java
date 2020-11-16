@@ -156,30 +156,27 @@ public class iBSV {
 
     private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
-            String defaultPW = "UUUUUUUU"; // hardcoded default password
-            String pass = "0x0909240304031901";
-            String passi = "0x0119030403240909";
+        String defaultPW = "UUUUUUUU"; // hardcoded default password
+        String pass = "0x0909240304031901";
+        String passi = "0x0119030403240909";
 
-            Long alma = Long.decode(passi);
-            defaultPW = Convert.toHexString(defaultPW.getBytes());
-            // System.out.println(alma);
-            byte[] pawg = Convert.toByteArray(alma);
-            onewirecontainer02.readSubkey(buf, key, pawg);
+        Long alma = Long.decode(passi);
+        defaultPW = Convert.toHexString(defaultPW.getBytes());
+        // System.out.println(alma);
+        byte[] pawg = Convert.toByteArray(alma);
+        onewirecontainer02.readSubkey(buf, key, pawg);
 
-            String hexStr = Convert.toHexString(buf, "");
-            String printStr = hexToAscii(hexStr);
+        String hexStr = Convert.toHexString(buf, " ");
+        String printStr = hexToAscii(hexStr);
 
-            // getSubkeyheader(buf);
-            System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + Convert.toHexString(pawg));
-            System.out.println("[" + "]");
-            System.out.println(hexStr);
+        getSubkeyheader(Convert.toHexString(buf));
+        System.out.println(hexStr);
     }
 
-    private static void getSubkeyheader(byte[] buf) {
-        for(int i = 0; i < 8; i++) {
-            System.out.print(buf[i]);
-        }
-        System.out.println();
+    private static void getSubkeyheader(String str) {
+        System.out.print("ID: 0x" + str.substring(0,16) + "  | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
+        System.out.println("[" + hexToAscii(str.substring(32)) + "]");
+        System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
