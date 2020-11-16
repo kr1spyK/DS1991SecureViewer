@@ -93,11 +93,8 @@ public class iBSV {
 
         byte scratchpadBuffer[] = new byte[64];
 
-        System.out.println("Read Scratchpad:");
-        scratchpadBuffer = onewirecontainer02.readScratchpad();
-        String str = Convert.toHexString(scratchpadBuffer, " ");
-        System.out.println("[" + hexToAscii(str) + "]");
-        System.out.println(str);
+        scratchpadBuffer = readScratchpad(onewirecontainer02);
+        // System.out.println(Convert.toHexString(scratchpadBuffer[1]));
 
         getSubkeys(onewirecontainer02);
     }
@@ -179,6 +176,18 @@ public class iBSV {
         System.out.print("ID: 0x" + str.substring(0,16) + "  | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
         System.out.println("[" + hexToAscii(str.substring(32)) + "]");
         System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
+    }
+
+    private static byte[] readScratchpad(OneWireContainer02 odc) throws Exception {
+        byte[] scratchpad = new byte [64];
+
+        System.out.println("Read Scratchpad:");
+        scratchpad = odc.readScratchpad();
+        String str = Convert.toHexString(scratchpad, " ");
+        System.out.println("[" + hexToAscii(str) + "]");
+        System.out.println(str);
+
+        return scratchpad;
     }
 
     private static void clearScratchpad(OneWireContainer02 odc)
