@@ -148,24 +148,30 @@ public class iBSV {
 
         System.out.println("read SubKeys:");
         for (int i = 0; i < 3; i++) {
-            displaySubkeys(onewirecontainer02, i);
+            displaySubkey(onewirecontainer02, i);
         }
 
         return idList;
     }
 
-    private static void displaySubkeys(OneWireContainer02 onewirecontainer02, int key) throws Exception {
+    private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
             String defaultPW = "UUUUUUUU"; // hardcoded default password
-            Long alma = Long.decode("0x0909240304031901");
+            String pass = "0x0909240304031901";
+            String passi = "0x0119030403240909";
+
+            Long alma = Long.decode(passi);
+            defaultPW = Convert.toHexString(defaultPW.getBytes());
             // System.out.println(alma);
-            onewirecontainer02.readSubkey(buf, key, Convert.toByteArray(alma));
-            String hexStr = Convert.toHexString(buf, " ");
+            byte[] pawg = Convert.toByteArray(alma);
+            onewirecontainer02.readSubkey(buf, key, pawg);
+
+            String hexStr = Convert.toHexString(buf, "");
             String printStr = hexToAscii(hexStr);
+
             // getSubkeyheader(buf);
-            // System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + "");
-            // System.out.println("[" + printStr.substring(16, printStr.length()) + "]");
-            // System.out.println("[" + hexStr + "]");
+            System.out.println("ID: '" + printStr.substring(0, 8) + "' " + "transmitted-pw: " + Convert.toHexString(pawg));
+            System.out.println("[" + "]");
             System.out.println(hexStr);
     }
 
