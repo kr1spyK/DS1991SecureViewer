@@ -101,12 +101,12 @@ public class iBSV {
             }
             buttonSel = CONSOLE.nextInt();
         } while (buttonSel < 0);
-        System.out.println("selected: " + buttonSel);
+        System.out.print(" selected: " + buttonSel + ")");
     }
 
     private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
         
-        System.out.printf("working with: %s%n", onewirecontainer02.getAddressAsString());
+        System.out.printf(" %s%n", onewirecontainer02.getAddressAsString());
 
         byte scratchpadBuffer[] = new byte[64];
 
@@ -190,7 +190,7 @@ public class iBSV {
     }
 
     private static void getSubkeyheader(String str) {
-        System.out.print("ID: 0x" + str.substring(0,16) + "  | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
+        System.out.print("ID: 0x" + str.substring(0,16) + " | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
         System.out.println("[" + hexToAscii(str.substring(32)) + "]");
         System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
     }
@@ -228,12 +228,15 @@ public class iBSV {
             String str = hexStr.substring(i, i + 2);
             int thebyte = Integer.parseInt(str, 16);
 
-            if (Character.isISOControl((char) thebyte) || Character.isWhitespace((char) thebyte)) {
-                output.append(" ");
+            if (Character.isISOControl((char) thebyte)) {
+                // output.append(" ");
                 output.append(str);
-                output.append("h ");
+                output.append(" ");
+            } else if (Character.isWhitespace((char) thebyte)) {
+                output.append(".");
             } else {
                 output.append((char) thebyte);
+                // output.append(" ");
             }
             output.append(delimiter);
 	    }
