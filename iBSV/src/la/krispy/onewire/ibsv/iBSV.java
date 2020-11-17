@@ -30,8 +30,8 @@ package la.krispy.onewire.ibsv;
 
 import com.dalsemi.onewire.OneWireAccessProvider;
 import com.dalsemi.onewire.OneWireException;
-import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.adapter.OneWireIOException;
+import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Address;
@@ -41,17 +41,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * We gotta do the thing. The secure iButton thing.
  */
 
 public class iBSV {
+
+    static Scanner CONSOLE = new Scanner(System.in);
     public static void main(String[] args) throws Exception {
 
-        // OneWireContainer owd = null;
         DSPortAdapter adapter;
-        // boolean adapterdetected = false;
 
         try {
             adapter = OneWireAccessProvider.getDefaultAdapter();
@@ -69,6 +70,9 @@ public class iBSV {
             OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
             System.out.printf("=== %s ===%n%s%n===        ===%n", onewirecontainer02.getName(), 
                                 onewirecontainer02.getDescription());
+
+            chooseDS1991();
+
             /**
              * TRANSPORT: DS1991 only supports primative memory functions and some unique commands
              */
@@ -85,6 +89,19 @@ public class iBSV {
             System.out.println(e + " can't find Adapter/Port.");
             return;
         }
+    }
+
+    private static void chooseDS1991() {
+        int buttonSel = -1;
+        do {
+            System.out.println("Select a device:");
+            while (!CONSOLE.hasNextInt()) {
+                System.out.println("Invalid selection");
+                CONSOLE.next();
+            }
+            buttonSel = CONSOLE.nextInt();
+        } while (buttonSel < 0);
+        System.out.println("selected: " + buttonSel);
     }
 
     private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
