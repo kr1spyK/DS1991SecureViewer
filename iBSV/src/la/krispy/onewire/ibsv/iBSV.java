@@ -228,8 +228,10 @@ public class iBSV {
             String str = hexStr.substring(i, i + 2);
             int thebyte = Integer.parseInt(str, 16);
 
-            if (Character.isISOControl((char) thebyte)) {
+            if (Character.isISOControl((char) thebyte) || Character.isWhitespace((char) thebyte)) {
+                output.append(" ");
                 output.append(str);
+                output.append("h ");
             } else {
                 output.append((char) thebyte);
             }
