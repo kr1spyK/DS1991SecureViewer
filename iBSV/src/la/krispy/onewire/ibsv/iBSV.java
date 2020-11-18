@@ -34,7 +34,6 @@ import com.dalsemi.onewire.adapter.OneWireIOException;
 import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
-import com.dalsemi.onewire.container.OneWireContainer20;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
 
@@ -96,11 +95,80 @@ public class iBSV {
         }
     }
 
-    private static void displayOptions() {
+    private static void operationOptions() {
         System.out.println("1. change button");
-        System.out.println("2. default read");
+        System.out.println("2. read scratchpad");
+        System.out.println("3. read subkey");
+        System.out.println("4. write scratchpad");
+        System.out.println("5. clear scratchpad");
+        System.out.println("6. write subkey from file");
+        System.out.println("7. copy scratchpad");
+        System.out.println("9. return to main menu");
+        System.out.println("0. Quit");
+    }
+
+    private static void operationsMenu(OneWireContainer02 owc02) throws Exception {
+        OneWireContainer02 currentiButton = owc02;
+        /**
+         * Check if class adapter matches container field, otherwise do
+         * noresetsearch on (currentadapter) and update container if located.
+         */
+
+         boolean back = false;
+         int menuItem;
+
+        do {
+            System.out.println();
+            System.out.printf("%ncurrent iButton: %s%n", currentiButton.getAddressAsString());
+            operationOptions();  
+            System.out.print("Select option: ");
+
+            menuItem = CONSOLE.next().charAt(0);
+            switch (menuItem) {
+                case '1': // Scans for new DS1991 devices and prompts selection.
+                    chooseDS1991();
+                    System.out.println("TODO: change button");
+                    break;
+                case '2': // Read scratchpad contents.
+                    System.out.println("Reading scratchpad...");
+                    readScratchpad(currentiButton);
+                    pressEnterToContinue();
+                    break;
+                case '3': // Reads one subkey.
+                    System.out.println("TODO: select one subkey (use 'dump DS1991' to read all)");
+                    pressEnterToContinue();
+                    break;
+                case '4': // Write scratchpad.
+                    System.out.println("TODO: write scratchpad");
+                    pressEnterToContinue();
+                    break;
+                case '5': // Clear scratchpad.
+                    clearScratchpad(currentiButton);
+                    readScratchpad(currentiButton);
+                    pressEnterToContinue();
+                    break;
+                case '6':
+                    System.out.println("TODO: write subkeys from file");
+                    pressEnterToContinue();
+                    break;
+                case '9':
+                    back = true;
+                    break;
+                case '0':
+                case 'q':
+                case 'Q':
+                    System.exit(0);
+                default:
+                    System.out.print("Invalid selection");
+            }
+        } while (!back);
+    }
+
+    private static void mainmenuOptions() {
+        System.out.println("1. change button");
+        System.out.println("2. check password");
         System.out.println("3. dump DS1991");
-        System.out.println("4. operate button");            
+        System.out.println("4. operate button");
         System.out.println("0. Quit");
     }
 
@@ -111,22 +179,22 @@ public class iBSV {
         boolean quit = false;
         int menuItem;
 
-        displayOptions();
+        // mainmenuOptions();
 
         do {
 // Testing container, I plan to have a class field for OWC02 and use a getter.
             // currentiButton = new OneWireContainer02((DSPortAdapter) null, "69420420CBDEFF02");
-            System.out.println("current iButton: " + currentiButton.getAddressAsString());
-
+            System.out.printf("%ncurrent iButton: %s%n", currentiButton.getAddressAsString());
+            mainmenuOptions();
             System.out.print("Select option: ");
             menuItem = CONSOLE.next().charAt(0);
             switch (menuItem) {
                 case '1': 
                     chooseDS1991();
-                    displayOptions();
                     break;
                 case '2':
-                    System.out.println("Viewing button...");
+                    System.out.println("TODO: interface for password checking");
+                    pressEnterToContinue();
                     viewDS1991(currentiButton);
                     pressEnterToContinue();
                     break;
@@ -135,8 +203,7 @@ public class iBSV {
                     pressEnterToContinue();
                     break;
                 case '4':
-                    System.out.println("TODO operations menu");
-                    pressEnterToContinue();
+                    operationsMenu(currentiButton);
                     break;
                 case '0':
                 case 'q':
@@ -150,10 +217,14 @@ public class iBSV {
         } while (!quit);
     }
 
-    private static void chooseDS1991() {
+    private static OneWireContainer02 chooseDS1991() {
+        /**
+         * Get current adapter, display DS1991 devices, return container
+         */
+        OneWireContainer02 owc02 = new OneWireContainer02();
         int buttonSel = -1;
         do {
-            System.out.println("Select a device: ");
+            System.out.println("Choose device: (does nothing fornow)");
             while (!CONSOLE.hasNextInt()) {
                 System.out.println("Invalid selection");
                 CONSOLE.next();
@@ -161,6 +232,8 @@ public class iBSV {
             buttonSel = CONSOLE.nextInt();
         } while (buttonSel < 0);
         System.out.printf(" iButton: %d%n", buttonSel);
+
+        return owc02;
     }
 
     private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
@@ -212,7 +285,7 @@ public class iBSV {
     private static List<Byte[]> getSubkeys(OneWireContainer02 onewirecontainer02) throws Exception {
         List<Byte[]> idList = new ArrayList<>(3);
 
-        System.out.println("read SubKeys:");
+        System.out.println("SubKeys:");
         for (int i = 0; i < 3; i++) {
             displaySubkey(onewirecontainer02, i);
         }
@@ -228,10 +301,10 @@ public class iBSV {
         String pass = "0x0909240304031901";
         String passi = "0x0119030403240909";
 
-        Long alma = Long.decode(passi);
+        Long almaHarmony = Long.decode(passi);
         defaultPW = Convert.toHexString(defaultPW.getBytes());
         // pawg = toByteArray(defaultPW or alma)
-        byte[] pawg = Convert.toByteArray(alma);
+        byte[] pawg = Convert.toByteArray(almaHarmony);
         onewirecontainer02.readSubkey(buf, key, pawg);
 
         String hexStr = Convert.toHexString(buf, " ");
@@ -254,11 +327,11 @@ public class iBSV {
         System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
     }
 
-    private static byte[] readScratchpad(OneWireContainer02 odc) throws Exception {
+    private static byte[] readScratchpad(OneWireContainer02 owc02) throws Exception {
         byte[] scratchpad = new byte[64];
 
-        System.out.println("Read Scratchpad:");
-        scratchpad = odc.readScratchpad();
+        System.out.println("Scratchpad:");
+        scratchpad = owc02.readScratchpad();
         String str = Convert.toHexString(scratchpad, " ");
         System.out.println("[" + hexToAscii(str) + "]");
         System.out.println(str);
@@ -304,7 +377,7 @@ public class iBSV {
     }
 
     private static void pressEnterToContinue() {
-        System.out.print("Press Enter key to continue...");
+        System.out.print("Press Enter to continue...");
         try {
             System.in.read();
         }  
