@@ -98,7 +98,7 @@ public class iBSV {
     private static void operationOptions() {
         System.out.println("1. change button");
         System.out.println("2. read scratchpad");
-        System.out.println("3. read subkey");
+        System.out.println("3. save subkey");
         System.out.println("4. write scratchpad");
         System.out.println("5. clear scratchpad");
         System.out.println("6. write subkey from file");
@@ -134,7 +134,7 @@ public class iBSV {
                     readScratchpad(currentiButton);
                     pressEnterToContinue();
                     break;
-                case '3': // Reads one subkey.
+                case '3': // Save subkey contents to file.
                     System.out.println("TODO: select one subkey (use 'dump DS1991' to read all)");
                     pressEnterToContinue();
                     break;
@@ -319,19 +319,20 @@ public class iBSV {
 
         getSubkeyheader(Convert.toHexString(buf));
         printResponse(hexStr, 1);
+        System.out.println();
     }
 
     private static void printResponse(String hexString, int printAsBlock) {
         if (printAsBlock != 0) {
             hexString = hexString.replaceAll("(.{24})", "$1\n");
         }
-        System.out.printf("%s%n%n", hexString);
+        System.out.println(hexString);
     }
 
     private static void getSubkeyheader(String str) {
         System.out.print("ID: 0x" + str.substring(0, 16) + " | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
         System.out.println("[" + hexToAscii(str.substring(32)) + "]");
-        System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
+        System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | '" + hexToAscii(str.substring(16, 32)) + "'");
     }
 
     private static byte[] readScratchpad(OneWireContainer02 owc02) throws Exception {
@@ -354,13 +355,12 @@ public class iBSV {
         odc.writeScratchpad(00, buf);
     }
 
-    // Takes hex coded string and converts printable values to symbols, otherwise
-    // keep hex value.
-    private static String hexToAscii(String hexStr) {
-        return hexToAscii(hexStr, "");
-    }
 
-    private static String hexToAscii(String hexStr, String delimiter) {
+    // private static String hexToAscii(String hexStr) {
+    //     return hexToAscii(hexStr, "");
+    // }
+    // Takes hex coded string and converts printable values to symbols, otherwise convert to dot (.)
+    private static String hexToAscii(String hexStr) {
         StringBuilder output = new StringBuilder("");
         hexStr = hexStr.replaceAll("\\s+", "");
 
@@ -369,15 +369,10 @@ public class iBSV {
             int thebyte = Integer.parseInt(str, 16);
 
             if (Character.isISOControl((char) thebyte)) {
-                // output.append(" ");
                 output.append(".");
-            } else if (Character.isWhitespace((char) thebyte)) {
-                output.append(" ");
             } else {
                 output.append((char) thebyte);
-                // output.append(" ");
             }
-            output.append(delimiter);
         }
         return output.toString();
     }
