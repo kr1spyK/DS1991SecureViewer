@@ -45,6 +45,13 @@ import java.util.Scanner;
 
 /**
  * We gotta do the thing. The secure iButton thing.
+ * DS1991 Multikey iButton has deprecated security
+ * In this program, data is manipulated bytewise and hex values without a symbol are
+ * represented by a dot '.', just like in TMEX Runtime Environment Secure Viewer.
+ * Initalized fields are filled with 'U' = 0x55 = ASCII code 85.
+ * Default password is eight spaces (0x20/ASCII code 32).
+ * ID and password fields shall only accept eight bytes, shorter entries are padded with spaces to
+ * meet hardware requirements of the DS1991.
  */
 
 public class iBSV {
