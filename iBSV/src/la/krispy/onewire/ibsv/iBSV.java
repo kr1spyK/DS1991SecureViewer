@@ -251,7 +251,7 @@ public class iBSV {
 
         byte scratchpadBuffer[] = new byte[64];
 
-        scratchpadBuffer = readScratchpad(onewirecontainer02);
+        // scratchpadBuffer = readScratchpad(onewirecontainer02);
         // System.out.println(Convert.toHexString(scratchpadBuffer[1]));
 
         getSubkeys(onewirecontainer02);
@@ -310,14 +310,14 @@ public class iBSV {
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
-        String defaultPW = "UUUUUUUU"; // hardcoded default password
+        String defaultPW = "        "; // Eight spaces = "0x2020202020202020"
         String pass = "0x0909240304031901";
         String passi = "0x0119030403240909";
 
         Long almaHarmony = Long.decode(passi);
         defaultPW = Convert.toHexString(defaultPW.getBytes());
         // pawg = toByteArray(defaultPW or alma)
-        byte[] pawg = Convert.toByteArray(almaHarmony);
+        byte[] pawg = Convert.toByteArray(defaultPW);
         onewirecontainer02.readSubkey(buf, key, pawg);
 
         String hexStr = Convert.toHexString(buf, " ");
