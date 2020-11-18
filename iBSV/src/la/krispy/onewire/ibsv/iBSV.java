@@ -139,7 +139,7 @@ public class iBSV {
                     pressEnterToContinue();
                     break;
                 case '4': // Write scratchpad.
-                    System.out.println("TODO: write scratchpad");
+                    System.out.println("TODO: write scratchpad from file");
                     pressEnterToContinue();
                     break;
                 case '5': // Clear scratchpad.
@@ -149,6 +149,10 @@ public class iBSV {
                     break;
                 case '6':
                     System.out.println("TODO: write subkeys from file");
+                    pressEnterToContinue();
+                    break;
+                case '7':
+                    System.out.println("TODO: command copy scratchpad");
                     pressEnterToContinue();
                     break;
                 case '9':
