@@ -34,6 +34,7 @@ import com.dalsemi.onewire.adapter.OneWireIOException;
 import com.dalsemi.onewire.adapter.DSPortAdapter;
 import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
+import com.dalsemi.onewire.container.OneWireContainer20;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
 
@@ -50,6 +51,7 @@ import java.util.Scanner;
 public class iBSV {
 
     static Scanner CONSOLE = new Scanner(System.in);
+    DSPortAdapter dsportadapter;
     public static void main(String[] args) throws Exception {
 
         DSPortAdapter adapter;
@@ -59,24 +61,27 @@ public class iBSV {
 
             // SESSION: Negotiate exclusive use of 1-Wire bus
             adapter.beginExclusive(true);
+
             /**
              * LINK: connect to 1-Wire bus
-             * NETWORK: Device discovery and selection
+             * 
              */
             // print program header, clear previous search restrictions
             initiBSV(adapter);
-
+            
+            /**
+             * NETWORK: Device discovery and selection
+             */
             // We will focus on a single device (DS1991 family).
             OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
             System.out.printf("=== %s ===%n%s%n===        ===%n", onewirecontainer02.getName(), 
                                 onewirecontainer02.getDescription());
 
-            chooseDS1991();
-
             /**
              * TRANSPORT: DS1991 only supports primative memory functions and some unique commands
              */
-            dumpDS1991(onewirecontainer02);
+            mainMenu(onewirecontainer02);
+            // viewDS1991(onewirecontainer02);
 
             // unblock adapter and free the port
             adapter.endExclusive();
@@ -91,21 +96,75 @@ public class iBSV {
         }
     }
 
+    private static void displayOptions() {
+        System.out.println("1. change button");
+        System.out.println("2. default read");
+        System.out.println("3. dump DS1991");
+        System.out.println("4. operate button");            
+        System.out.println("0. Quit");
+    }
+
+    private static void mainMenu(OneWireContainer02 owc02) throws Exception {
+        OneWireContainer02 currentiButton = owc02;
+        chooseDS1991();
+
+        boolean quit = false;
+        int menuItem;
+
+        displayOptions();
+
+        do {
+// Testing container, I plan to have a class field for OWC02 and use a getter.
+            // currentiButton = new OneWireContainer02((DSPortAdapter) null, "69420420CBDEFF02");
+            System.out.println("current iButton: " + currentiButton.getAddressAsString());
+
+            System.out.print("Select option: ");
+            menuItem = CONSOLE.next().charAt(0);
+            switch (menuItem) {
+                case '1': 
+                    chooseDS1991();
+                    displayOptions();
+                    break;
+                case '2':
+                    System.out.println("Viewing button...");
+                    viewDS1991(currentiButton);
+                    pressEnterToContinue();
+                    break;
+                case '3':
+                    System.out.println("TODO DUMP TO FILE");
+                    pressEnterToContinue();
+                    break;
+                case '4':
+                    System.out.println("TODO operations menu");
+                    pressEnterToContinue();
+                    break;
+                case '0':
+                case 'q':
+                case 'Q':
+                    quit = true;
+                    // break;
+                    return;
+                default:
+                    System.out.println("Invalid selection");
+            }
+        } while (!quit);
+    }
+
     private static void chooseDS1991() {
         int buttonSel = -1;
         do {
-            System.out.println("Select a device:");
+            System.out.println("Select a device: ");
             while (!CONSOLE.hasNextInt()) {
                 System.out.println("Invalid selection");
                 CONSOLE.next();
             }
             buttonSel = CONSOLE.nextInt();
         } while (buttonSel < 0);
-        System.out.print(" selected: " + buttonSel + ")");
+        System.out.printf(" iButton: %d%n", buttonSel);
     }
 
-    private static void dumpDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
-        
+    private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
+
         System.out.printf(" %s%n", onewirecontainer02.getAddressAsString());
 
         byte scratchpadBuffer[] = new byte[64];
@@ -118,14 +177,14 @@ public class iBSV {
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
 
-         // find first DS1991 (family code 0x02).
-         adapter.targetFamily(Convert.toInt("02"));
-         OneWireContainer owd = adapter.getFirstDeviceContainer();
-            if (owd == null || !Address.isValid(owd.getAddress())) {
-                // System.out.println("No DS1991 devices found!");
-                OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
-				throw e;
-            }
+        // find first DS1991 (family code 0x02).
+        adapter.targetFamily(Convert.toInt("02"));
+        OneWireContainer owd = adapter.getFirstDeviceContainer();
+        if (owd == null || !Address.isValid(owd.getAddress())) {
+            // System.out.println("No DS1991 devices found!");
+            OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
+            throw e;
+        }
 
         return new OneWireContainer02(adapter, owd.getAddress());
     }
@@ -190,13 +249,13 @@ public class iBSV {
     }
 
     private static void getSubkeyheader(String str) {
-        System.out.print("ID: 0x" + str.substring(0,16) + " | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
+        System.out.print("ID: 0x" + str.substring(0, 16) + " | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
         System.out.println("[" + hexToAscii(str.substring(32)) + "]");
         System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | " + hexToAscii(str.substring(16, 32)));
     }
 
     private static byte[] readScratchpad(OneWireContainer02 odc) throws Exception {
-        byte[] scratchpad = new byte [64];
+        byte[] scratchpad = new byte[64];
 
         System.out.println("Read Scratchpad:");
         scratchpad = odc.readScratchpad();
@@ -207,8 +266,7 @@ public class iBSV {
         return scratchpad;
     }
 
-    private static void clearScratchpad(OneWireContainer02 odc)
-            throws OneWireIOException, OneWireException {
+    private static void clearScratchpad(OneWireContainer02 odc) throws OneWireIOException, OneWireException {
         byte buf[] = new byte[64];
 
         System.out.println("Clearing scratchpad...");
@@ -216,15 +274,17 @@ public class iBSV {
         odc.writeScratchpad(00, buf);
     }
 
-    // Takes hex coded string and converts printable values to symbols, otherwise keep hex value.
+    // Takes hex coded string and converts printable values to symbols, otherwise
+    // keep hex value.
     private static String hexToAscii(String hexStr) {
-	    return hexToAscii(hexStr, "");
+        return hexToAscii(hexStr, "");
     }
+
     private static String hexToAscii(String hexStr, String delimiter) {
-	    StringBuilder output = new StringBuilder("");
+        StringBuilder output = new StringBuilder("");
         hexStr = hexStr.replaceAll("\\s+", "");
-        
-	    for (int i = 0; i < hexStr.length(); i += 2) {
+
+        for (int i = 0; i < hexStr.length(); i += 2) {
             String str = hexStr.substring(i, i + 2);
             int thebyte = Integer.parseInt(str, 16);
 
@@ -239,7 +299,15 @@ public class iBSV {
                 // output.append(" ");
             }
             output.append(delimiter);
-	    }
-	    return output.toString();
-	}
+        }
+        return output.toString();
+    }
+
+    private static void pressEnterToContinue() {
+        System.out.print("Press Enter key to continue...");
+        try {
+            System.in.read();
+        }  
+        catch(Exception e) {}  
+    }
 }
