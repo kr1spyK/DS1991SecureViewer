@@ -199,7 +199,6 @@ public class iBSV {
                     System.out.println("TODO: interface for password checking");
                     pressEnterToContinue();
                     viewDS1991(currentiButton);
-                    pressEnterToContinue();
                     break;
                 case '3':
                     System.out.println("TODO DUMP TO FILE");
@@ -318,12 +317,12 @@ public class iBSV {
         // String printStr = hexToAscii(hexStr);
 
         getSubkeyheader(Convert.toHexString(buf));
-        printResponse(hexStr, 1);
+        printAsBlock(hexStr, false);
         System.out.println();
     }
 
-    private static void printResponse(String hexString, int printAsBlock) {
-        if (printAsBlock != 0) {
+    private static void printAsBlock(String hexString, Boolean printAsBlock) {
+        if (printAsBlock) {
             hexString = hexString.replaceAll("(.{24})", "$1\n");
         }
         System.out.println(hexString);
