@@ -186,7 +186,6 @@ public class iBSV {
         // mainmenuOptions();
 
         do {
-// Testing container, I plan to have a class field for OWC02 and use a getter.
             // currentiButton = new OneWireContainer02((DSPortAdapter) null, "69420420CBDEFF02");
             System.out.printf("%ncurrent iButton: %s%n", currentiButton.getAddressAsString());
             mainmenuOptions();
@@ -297,6 +296,10 @@ public class iBSV {
         return idList;
     }
 
+    private static byte[] parsePassword(String str) {
+        return str.getBytes();
+    }
+
     // DS1991 command structure, three bytes: [command|address|inverse address]
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
@@ -367,10 +370,9 @@ public class iBSV {
 
             if (Character.isISOControl((char) thebyte)) {
                 // output.append(" ");
-                output.append(str);
-                output.append(" ");
-            } else if (Character.isWhitespace((char) thebyte)) {
                 output.append(".");
+            } else if (Character.isWhitespace((char) thebyte)) {
+                output.append(" ");
             } else {
                 output.append((char) thebyte);
                 // output.append(" ");
