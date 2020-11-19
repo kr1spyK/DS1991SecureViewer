@@ -245,6 +245,11 @@ public class iBSV {
         return owc02;
     }
 
+    private static byte[] checkforEightBytes(byte[] ino) {
+        
+        return ino;
+    }
+
     private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
 
         System.out.printf(" %s%n", onewirecontainer02.getAddressAsString());
@@ -300,10 +305,6 @@ public class iBSV {
         }
 
         return idList;
-    }
-
-    private static byte[] parsePassword(String str) {
-        return str.getBytes();
     }
 
     // DS1991 command structure, three bytes: [command|address|inverse address]
