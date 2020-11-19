@@ -245,9 +245,20 @@ public class iBSV {
         return owc02;
     }
 
+    private static byte[] checkforEightBytes(String str) {
+        return checkforEightBytes(str.getBytes());
+    }
     private static byte[] checkforEightBytes(byte[] ino) {
-        
-        return ino;
+        String pad = "        ";
+        byte[] eightField = pad.getBytes();
+
+        if (ino.length > 8) {
+        //    return Arrays.copyOf(original, newLength))
+        } 
+        for (int i = 0; i < ino.length; i++) {
+                eightField[i] = ino[i];
+            }
+        return eightField;
     }
 
     private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
@@ -311,35 +322,39 @@ public class iBSV {
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
         byte[] buf = new byte[64];
-        String defaultPW = "        "; // Eight spaces = "0x2020202020202020"
-        String pass = "0x0909240304031901";
-        String passi = "0x0119030403240909";
 
-        Long almaHarmony = Long.decode(passi);
-        defaultPW = Convert.toHexString(defaultPW.getBytes());
-        // pawg = toByteArray(defaultPW or alma)
-        byte[] pawg = Convert.toByteArray(defaultPW);
-        onewirecontainer02.readSubkey(buf, key, pawg);
+        // Alma Harmony   "0x0909240304031901" // MSB string
+        Long almaHarmony = 0x0119030403240909L; // LSB string
+        Long defaultPW = 0x2020202020202020L; // Eight spaces = '        '
 
-        String hexStr = Convert.toHexString(buf, " ");
-        // String printStr = hexToAscii(hexStr);
+        // toByteArray constructs a LSByte byte array.
+        byte[] pass = Convert.toByteArray(almaHarmony);
 
-        getSubkeyheader(Convert.toHexString(buf));
-        printAsBlock(hexStr, false);
+        onewirecontainer02.readSubkey(buf, key, pass);
+
+        // String hexStr = Convert.toHexString(buf, " ");
+
+        showSubkeyHeader(buf);
+        printAsBlock(buf, false);
         System.out.println();
     }
 
-    private static void printAsBlock(String hexString, Boolean printAsBlock) {
+    private static void printAsBlock(byte[] buf, Boolean printAsBlock) {
+        String hexString = Convert.toHexString(buf, " ");
         if (printAsBlock) {
             hexString = hexString.replaceAll("(.{24})", "$1\n");
         }
         System.out.println(hexString);
     }
 
-    private static void getSubkeyheader(String str) {
-        System.out.print("ID: 0x" + str.substring(0, 16) + " | " + "transmitted-pw: 0x" + str.substring(16, 32) + " ");
-        System.out.println("[" + hexToAscii(str.substring(32)) + "]");
-        System.out.println("     '" + hexToAscii(str.substring(0, 16)) + "' | '" + hexToAscii(str.substring(16, 32)) + "'");
+    private static void showSubkeyHeader(byte[] buf) {
+        String id = Convert.toHexString(buf, 0, 8);
+        String ps = Convert.toHexString(buf, 8, 8);
+        String sd = Convert.toHexString(buf, 16, 48);
+
+        System.out.print("ID: 0x" + id + " | " + "transmitted-pw: 0x" + ps + " ");
+        System.out.println("[" + hexToAscii(sd)+ "]");
+        System.out.println("     '" + hexToAscii(id) + "' | '" + hexToAscii(ps) + "'");
     }
 
     private static byte[] readScratchpad(OneWireContainer02 owc02) throws Exception {
@@ -362,10 +377,6 @@ public class iBSV {
         odc.writeScratchpad(00, buf);
     }
 
-
-    // private static String hexToAscii(String hexStr) {
-    //     return hexToAscii(hexStr, "");
-    // }
     // Takes hex coded string and converts printable values to symbols, otherwise convert to dot (.)
     private static String hexToAscii(String hexStr) {
         StringBuilder output = new StringBuilder("");
@@ -375,7 +386,7 @@ public class iBSV {
             String str = hexStr.substring(i, i + 2);
             int thebyte = Integer.parseInt(str, 16);
 
-            if (Character.isISOControl((char) thebyte)) {
+            if (Character.isISOControl(thebyte)) {
                 output.append(".");
             } else {
                 output.append((char) thebyte);
