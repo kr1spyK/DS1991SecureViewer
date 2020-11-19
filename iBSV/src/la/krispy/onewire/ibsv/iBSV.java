@@ -36,6 +36,7 @@ import com.dalsemi.onewire.container.OneWireContainer;
 import com.dalsemi.onewire.container.OneWireContainer02;
 import com.dalsemi.onewire.utils.Address;
 import com.dalsemi.onewire.utils.Convert;
+import com.dalsemi.onewire.utils.Convert.ConvertException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,20 +45,19 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * We gotta do the thing. The secure iButton thing.
- * DS1991 Multikey iButton has deprecated security
- * In this program, data is manipulated bytewise and hex values without a symbol are
- * represented by a dot '.', just like in TMEX Runtime Environment Secure Viewer.
- * Initalized fields are filled with 'U' = 0x55 = ASCII code 85.
- * Default password is eight spaces (0x20/ASCII code 32).
- * ID and password fields shall only accept eight bytes, shorter entries are padded with spaces to
- * meet hardware requirements of the DS1991.
+ * We gotta do the thing. The secure iButton thing. DS1991 Multikey iButton has
+ * deprecated security In this program, data is manipulated bytewise and hex
+ * values without a symbol are represented by a dot '.', just like in TMEX
+ * Runtime Environment Secure Viewer. Initalized fields are filled with 'U' =
+ * 0x55 = ASCII code 85. Default password is eight spaces (0x20/ASCII code 32).
+ * ID and password fields shall only accept eight bytes, shorter entries are
+ * padded with spaces to meet hardware requirements of the DS1991.
  */
 
 public class iBSV {
-
     static Scanner CONSOLE = new Scanner(System.in);
     DSPortAdapter dsportadapter;
+
     public static void main(String[] args) throws Exception {
 
         DSPortAdapter adapter;
@@ -74,17 +74,18 @@ public class iBSV {
              */
             // print program header, clear previous search restrictions
             initiBSV(adapter);
-            
+
             /**
              * NETWORK: Device discovery and selection
              */
             // We will focus on a single device (DS1991 family).
             OneWireContainer02 onewirecontainer02 = grabFirstContainer02(adapter);
-            System.out.printf("=== %s ===%n%s%n===        ===%n", onewirecontainer02.getName(), 
-                                onewirecontainer02.getDescription());
+            System.out.printf("=== %s ===%n%s%n===        ===%n", onewirecontainer02.getName(),
+                    onewirecontainer02.getDescription());
 
             /**
-             * TRANSPORT: DS1991 only supports primative memory functions and some unique commands
+             * TRANSPORT: DS1991 only supports primative memory functions and some unique
+             * commands
              */
             mainMenu(onewirecontainer02);
             // viewDS1991(onewirecontainer02);
@@ -117,17 +118,17 @@ public class iBSV {
     private static void operationsMenu(OneWireContainer02 owc02) throws Exception {
         OneWireContainer02 currentiButton = owc02;
         /**
-         * Check if class adapter matches container field, otherwise do
-         * noresetsearch on (currentadapter) and update container if located.
+         * Check if class adapter matches container field, otherwise do noresetsearch on
+         * (currentadapter) and update container if located.
          */
 
-         boolean back = false;
-         int menuItem;
+        boolean back = false;
+        int menuItem;
 
         do {
             System.out.println();
             System.out.printf("%ncurrent iButton: %s%n", currentiButton.getAddressAsString());
-            operationOptions();  
+            operationOptions();
             System.out.print("Select option: ");
 
             menuItem = CONSOLE.next().charAt(0);
@@ -189,16 +190,15 @@ public class iBSV {
         boolean quit = false;
         int menuItem;
 
-        // mainmenuOptions();
-
         do {
-            // currentiButton = new OneWireContainer02((DSPortAdapter) null, "69420420CBDEFF02");
+            // currentiButton = new OneWireContainer02((DSPortAdapter) null,
+            // "69420420CBDEFF02");
             System.out.printf("%ncurrent iButton: %s%n", currentiButton.getAddressAsString());
             mainmenuOptions();
             System.out.print("Select option: ");
             menuItem = CONSOLE.next().charAt(0);
             switch (menuItem) {
-                case '1': 
+                case '1':
                     chooseDS1991();
                     break;
                 case '2':
@@ -245,9 +245,20 @@ public class iBSV {
         return owc02;
     }
 
-    private static byte[] checkforEightBytes(String str) {
-        return checkforEightBytes(str.getBytes());
+    private static byte[] scanFieldName(String name) {
+        System.out.printf("Enter %s (hexString): ", name);
+        // TODO: code to interpret string.
+        String str = CONSOLE.next();
+        byte[] ino = {};
+        try {
+            ino = Convert.toByteArray(str);
+        } catch (ConvertException e) {
+            System.out.print("scanFieldName " + e);
+            e.printStackTrace();
+        }
+        return checkforEightBytes(ino);
     }
+
     private static byte[] checkforEightBytes(byte[] ino) {
         String pad = "        ";
         byte[] eightField = pad.getBytes();
@@ -262,19 +273,22 @@ public class iBSV {
     }
 
     private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
+        // Alma Harmony   "0x0909240304031901" // MSB string
+        Long almaHarmony = 0x0119030403240909L; // LSB string
+        byte[] almaBytes = Convert.toByteArray(almaHarmony);
 
-        System.out.printf(" %s%n", onewirecontainer02.getAddressAsString());
+        System.out.printf("%s%n", onewirecontainer02.getAddressAsString());
 
-        byte scratchpadBuffer[] = new byte[64];
+        byte[] pwd = {};
 
-        // scratchpadBuffer = readScratchpad(onewirecontainer02);
-        // System.out.println(Convert.toHexString(scratchpadBuffer[1]));
-
-        getSubkeysList(onewirecontainer02);
+        List<byte[]> subkeyList = getSubkeysList(onewirecontainer02, almaBytes);
+        for (byte[] subkey : subkeyList) {
+            // displaySubkey(subkey);
+            System.out.println(Convert.toHexString(subkey, " "));
+        }
     }
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
-
         // find first DS1991 (family code 0x02).
         adapter.targetFamily(Convert.toInt("02"));
         OneWireContainer owd = adapter.getFirstDeviceContainer();
@@ -283,7 +297,6 @@ public class iBSV {
             OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
             throw e;
         }
-
         return new OneWireContainer02(adapter, owd.getAddress());
     }
 
@@ -307,24 +320,21 @@ public class iBSV {
         System.out.println();
     }
 
-    private static List<Byte[]> getSubkeysList(OneWireContainer02 onewirecontainer02) throws Exception {
-        List<Byte[]> idList = new ArrayList<>(3);
+    private static List<byte[]> getSubkeysList(OneWireContainer02 onewirecontainer02, byte[] pwd) throws Exception {
+        List<byte[]> subkeyList = new ArrayList<>(3);
         byte[] buf = new byte[64];
-        System.out.println("SubKeys:");
         for (int i = 0; i < 3; i++) {
-            buf = getSubkey(onewirecontainer02, i, (byte[]) null);
-            displaySubkey(buf);
+            buf = getSubkey(onewirecontainer02, i, pwd);
+            subkeyList.add(buf);
         }
-        return idList;
+        return subkeyList;
     }
 
-    private static byte[] getSubkey(OneWireContainer02 onewirecontainer02, int key, byte[] password) throws Exception {
-        // Alma Harmony   "0x0909240304031901" // MSB string
-        Long almaHarmony = 0x0119030403240909L; // LSB string
+    private static byte[] getSubkey(OneWireContainer02 onewirecontainer02, int key, byte[] pwd) throws Exception {
         Long defaultPswd = 0x2020202020202020L; // Eight spaces = "        "
 
         // toByteArray constructs a LSByte byte array.
-        byte[] passwd = Convert.toByteArray(almaHarmony);
+        byte[] passwd = (pwd.length == 0) ? Convert.toByteArray(defaultPswd) : pwd;
 
         return onewirecontainer02.readSubkey(key, passwd);
     }
@@ -332,10 +342,9 @@ public class iBSV {
     // DS1991 command structure, three bytes: [command|address|inverse address]
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(byte[] subkey) {
-
         showSubkeyHeader(subkey);
         printAsBlock(subkey, false);
-        System.out.println();
+        // System.out.println();
     }
 
     private static void printAsBlock(byte[] buf, boolean printAsBlock) {
@@ -371,7 +380,7 @@ public class iBSV {
     private static void clearScratchpad(OneWireContainer02 odc) throws OneWireIOException, OneWireException {
         byte buf[] = new byte[64];
 
-        if(!(confirmChoice("Clear Scratchpad?"))) {
+        if (!(confirmChoice("Clear Scratchpad?"))) {
             System.out.println("scratchpad not cleared");
             return;
         }
