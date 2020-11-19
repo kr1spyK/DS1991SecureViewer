@@ -134,7 +134,6 @@ public class iBSV {
             switch (menuItem) {
                 case '1': // Scans for new DS1991 devices and prompts selection.
                     chooseDS1991();
-                    System.out.println("TODO: change button");
                     break;
                 case '2': // Read scratchpad contents.
                     System.out.println("Reading scratchpad...");
@@ -238,6 +237,7 @@ public class iBSV {
                 System.out.println("Invalid selection");
                 CONSOLE.next();
             }
+            System.out.println("TODO: Add changebutton logic");
             buttonSel = CONSOLE.nextInt();
         } while (buttonSel < 0);
         System.out.printf(" iButton: %d%n", buttonSel);
@@ -270,7 +270,7 @@ public class iBSV {
         // scratchpadBuffer = readScratchpad(onewirecontainer02);
         // System.out.println(Convert.toHexString(scratchpadBuffer[1]));
 
-        getSubkeys(onewirecontainer02);
+        getSubkeysList(onewirecontainer02);
     }
 
     private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
@@ -307,39 +307,38 @@ public class iBSV {
         System.out.println();
     }
 
-    private static List<Byte[]> getSubkeys(OneWireContainer02 onewirecontainer02) throws Exception {
+    private static List<Byte[]> getSubkeysList(OneWireContainer02 onewirecontainer02) throws Exception {
         List<Byte[]> idList = new ArrayList<>(3);
-
+        byte[] buf = new byte[64];
         System.out.println("SubKeys:");
         for (int i = 0; i < 3; i++) {
-            displaySubkey(onewirecontainer02, i);
+            buf = getSubkey(onewirecontainer02, i, (byte[]) null);
+            displaySubkey(buf);
         }
-
         return idList;
+    }
+
+    private static byte[] getSubkey(OneWireContainer02 onewirecontainer02, int key, byte[] password) throws Exception {
+        // Alma Harmony   "0x0909240304031901" // MSB string
+        Long almaHarmony = 0x0119030403240909L; // LSB string
+        Long defaultPswd = 0x2020202020202020L; // Eight spaces = "        "
+
+        // toByteArray constructs a LSByte byte array.
+        byte[] passwd = Convert.toByteArray(almaHarmony);
+
+        return onewirecontainer02.readSubkey(key, passwd);
     }
 
     // DS1991 command structure, three bytes: [command|address|inverse address]
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
-    private static void displaySubkey(OneWireContainer02 onewirecontainer02, int key) throws Exception {
-        byte[] buf = new byte[64];
+    private static void displaySubkey(byte[] subkey) {
 
-        // Alma Harmony   "0x0909240304031901" // MSB string
-        Long almaHarmony = 0x0119030403240909L; // LSB string
-        Long defaultPW = 0x2020202020202020L; // Eight spaces = '        '
-
-        // toByteArray constructs a LSByte byte array.
-        byte[] pass = Convert.toByteArray(almaHarmony);
-
-        onewirecontainer02.readSubkey(buf, key, pass);
-
-        // String hexStr = Convert.toHexString(buf, " ");
-
-        showSubkeyHeader(buf);
-        printAsBlock(buf, false);
+        showSubkeyHeader(subkey);
+        printAsBlock(subkey, false);
         System.out.println();
     }
 
-    private static void printAsBlock(byte[] buf, Boolean printAsBlock) {
+    private static void printAsBlock(byte[] buf, boolean printAsBlock) {
         String hexString = Convert.toHexString(buf, " ");
         if (printAsBlock) {
             hexString = hexString.replaceAll("(.{24})", "$1\n");
