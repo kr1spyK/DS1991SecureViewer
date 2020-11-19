@@ -372,9 +372,34 @@ public class iBSV {
     private static void clearScratchpad(OneWireContainer02 odc) throws OneWireIOException, OneWireException {
         byte buf[] = new byte[64];
 
-        System.out.println("Clearing scratchpad...");
+        if(!(confirmChoice("Clear Scratchpad?"))) {
+            System.out.println("scratchpad not cleared");
+            return;
+        }
+        System.out.println("reInitalizing scratchpad...");
         Arrays.fill(buf, (byte) 'U');
         odc.writeScratchpad(00, buf);
+    }
+
+    private static Boolean confirmChoice(String msg) {
+        Boolean yn = null;
+        System.out.print(msg + " [y/n]: ");
+        while (yn == null) {
+            char in = CONSOLE.next().charAt(0);
+            switch (in) {
+                case 'y':
+                case 'Y':
+                    yn = true;
+                    break;
+                case 'n':
+                case 'N':
+                    yn = false;
+                    break;
+                default:
+                    System.out.print("[y/n]?: ");
+            }
+        }
+        return yn;
     }
 
     // Takes hex coded string and converts printable values to symbols, otherwise convert to dot (.)
