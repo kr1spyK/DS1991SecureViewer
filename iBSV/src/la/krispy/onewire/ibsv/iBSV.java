@@ -343,8 +343,8 @@ public class iBSV {
 
         List<byte[]> subkeyList = getSubkeysList(onewirecontainer02, pwd);
         for (byte[] subkey : subkeyList) {
-            displaySubkey(subkey);
-            // System.out.println(Convert.toHexString(subkey, " "));
+            // displaySubkey(subkey);
+            System.out.println(Convert.toHexString(subkey, " "));
         }
     }
 
@@ -409,7 +409,7 @@ public class iBSV {
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(byte[] subkey) {
         showSubkeyHeader(subkey);
-        printAsBlock(subkey, true);
+        printAsBlock(subkey, false);
         // System.out.println();
     }
 
