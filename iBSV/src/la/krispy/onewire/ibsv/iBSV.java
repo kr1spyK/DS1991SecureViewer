@@ -427,8 +427,8 @@ public class iBSV {
         String sd = Convert.toHexString(buf, 16, 48);
 
         System.out.print("ID: 0x" + id + " | " + "transmitted-pw: 0x" + ps + " ");
-        System.out.println("[" + hexToAscii(sd) + "]");
-        System.out.println("     '" + hexToAscii(id) + "' | '" + hexToAscii(ps) + "'");
+        System.out.println("[" + hexToISO8859(sd) + "]");
+        System.out.println("     '" + hexToISO8859(id) + "' | '" + hexToISO8859(ps) + "'");
     }
 
     private static byte[] readScratchpad(OneWireContainer02 owc02) throws Exception {
@@ -437,7 +437,7 @@ public class iBSV {
         System.out.println("Scratchpad:");
         scratchpad = owc02.readScratchpad();
         String str = Convert.toHexString(scratchpad, " ");
-        System.out.println("[" + hexToAscii(str) + "]");
+        System.out.println("[" + hexToISO8859(str) + "]");
         System.out.println(str);
 
         return scratchpad;
@@ -497,7 +497,7 @@ public class iBSV {
     }
 
     // Takes hex coded string and converts printable values to symbols, otherwise convert to dot (.)
-    private static String hexToAscii(String hexStr) {
+    private static String hexToISO8859(String hexStr) {
         StringBuilder output = new StringBuilder("");
         hexStr = hexStr.replaceAll("\\s+", "");
 
