@@ -40,7 +40,9 @@ import com.dalsemi.onewire.utils.Convert.ConvertException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -56,14 +58,15 @@ import java.util.Scanner;
 
 public class iBSV {
     static Scanner CONSOLE = new Scanner(System.in);
-    DSPortAdapter dsportadapter;
+    static DSPortAdapter dsportadapter;
 
     public static void main(String[] args) throws Exception {
 
-        DSPortAdapter adapter;
+        // DSPortAdapter adapter;
 
         try {
-            adapter = OneWireAccessProvider.getDefaultAdapter();
+            setDSPortAdapter();
+            DSPortAdapter adapter = getDSPortAdapter();
 
             // SESSION: Negotiate exclusive use of 1-Wire bus
             adapter.beginExclusive(true);
@@ -202,8 +205,6 @@ public class iBSV {
                     chooseDS1991();
                     break;
                 case '2':
-                    System.out.println("TODO: interface for password checking");
-                    pressEnterToContinue();
                     viewDS1991(currentiButton);
                     break;
                 case '3':
@@ -225,14 +226,30 @@ public class iBSV {
         } while (!quit);
     }
 
+    @SuppressWarnings("unchecked")
     private static OneWireContainer02 chooseDS1991() {
         /**
          * Get current adapter, display DS1991 devices, return container
          */
-        OneWireContainer02 owc02 = new OneWireContainer02();
+        DSPortAdapter adapter = getDSPortAdapter();
+        Enumeration<OneWireContainer> owContainerEnum = Collections.emptyEnumeration();
+        Iterator<OneWireContainer> newlist = Collections.emptyIterator();
+        try {
+            owContainerEnum = adapter.getAllDeviceContainers();
+            newlist = owContainerEnum.asIterator();
+        } catch (OneWireException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        OneWireContainer02 owc02 = grabFirstContainer02(adapter);
+
         int buttonSel = -1;
         do {
             System.out.println("Choose device: (does nothing fornow)");
+            while (owContainerEnum.hasMoreElements()) {
+                OneWireContainer test = owContainerEnum.nextElement();
+                System.out.println(test.getAddressAsString());
+            }
             while (!CONSOLE.hasNextInt()) {
                 System.out.println("Invalid selection");
                 CONSOLE.next();
@@ -264,39 +281,88 @@ public class iBSV {
         byte[] eightField = pad.getBytes();
 
         if (ino.length > 8) {
-        //    return Arrays.copyOf(original, newLength))
-        } 
+            // return Arrays.copyOf(original, newLength))
+        }
         for (int i = 0; i < ino.length; i++) {
-                eightField[i] = ino[i];
-            }
+            eightField[i] = ino[i];
+        }
         return eightField;
     }
 
-    private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
-        // Alma Harmony   "0x0909240304031901" // MSB string
+    private static byte[] selectPassword() {
+        Long zeroed = 0x0000000000000000L;
+        //   Alma Harmony "0x0909240304031901" // MSB string
         Long almaHarmony = 0x0119030403240909L; // LSB string
-        byte[] almaBytes = Convert.toByteArray(almaHarmony);
+        Long allU = 0x5555555555555555L;
+
+        System.out.println("0. empty (eight spaces)");
+        System.out.println("1. zeroed (00000000)");
+        System.out.println("2. init (eight 'U's)");
+        System.out.println("3. Alma Harmony code");
+        System.out.println("9. enter password");
+        System.out.println("Select a code: ");
+        byte[] pwd = {};
+        int selection = -1;
+
+        do {
+            while (!CONSOLE.hasNextInt()) { CONSOLE.next();}
+            selection = CONSOLE.nextInt();
+        } while (selection < 0);
+
+        switch (selection) {
+            case 0:
+                break;
+            case 1:
+                pwd = Convert.toByteArray(zeroed);
+                break;
+            case 2:
+                pwd = Convert.toByteArray(allU);
+                break;
+            case 3:
+                pwd = Convert.toByteArray(almaHarmony);
+                break;
+            case 9:
+                System.out.println("TODO passwrod parsing");
+                break;
+            default:
+                System.out.println("No password input");
+                break;
+        }
+        return pwd;
+    }
+
+    private static void viewDS1991(OneWireContainer02 onewirecontainer02) throws Exception {
+
+        // Long allU = 0x5555555555555555L;
+        // byte[] Ubytes = Convert.toByteArray(allU);
+        // byte[] almaBytes = Convert.toByteArray(almaHarmony);
 
         System.out.printf("%s%n", onewirecontainer02.getAddressAsString());
 
-        byte[] pwd = {};
+        byte[] pwd = selectPassword();
 
-        List<byte[]> subkeyList = getSubkeysList(onewirecontainer02, almaBytes);
+        List<byte[]> subkeyList = getSubkeysList(onewirecontainer02, pwd);
         for (byte[] subkey : subkeyList) {
-            // displaySubkey(subkey);
-            System.out.println(Convert.toHexString(subkey, " "));
+            displaySubkey(subkey);
+            // System.out.println(Convert.toHexString(subkey, " "));
         }
     }
 
-    private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) throws Exception {
+    private static OneWireContainer02 grabFirstContainer02(DSPortAdapter adapter) {
         // find first DS1991 (family code 0x02).
-        adapter.targetFamily(Convert.toInt("02"));
-        OneWireContainer owd = adapter.getFirstDeviceContainer();
-        if (owd == null || !Address.isValid(owd.getAddress())) {
-            // System.out.println("No DS1991 devices found!");
-            OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
-            throw e;
+        adapter.targetFamily(0x02);
+        OneWireContainer owd = new OneWireContainer();
+        try {
+            owd = adapter.getFirstDeviceContainer();
+        } catch (OneWireException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
+        // if (owd == null || !Address.isValid(owd.getAddress())) {
+        //     // System.out.println("No DS1991 devices found!");
+        //     OneWireIOException e = new OneWireIOException("No DS1991 devices found!");
+        //     throw e;
+        // }
         return new OneWireContainer02(adapter, owd.getAddress());
     }
 
@@ -331,7 +397,7 @@ public class iBSV {
     }
 
     private static byte[] getSubkey(OneWireContainer02 onewirecontainer02, int key, byte[] pwd) throws Exception {
-        Long defaultPswd = 0x2020202020202020L; // Eight spaces = "        "
+        Long defaultPswd = 0x2020202020202020L; // Eight spaces = " "
 
         // toByteArray constructs a LSByte byte array.
         byte[] passwd = (pwd.length == 0) ? Convert.toByteArray(defaultPswd) : pwd;
@@ -343,7 +409,7 @@ public class iBSV {
     // readSubKey: [0x66|{subkey#,address from 0x10 to 0x3F}|inverse address]
     private static void displaySubkey(byte[] subkey) {
         showSubkeyHeader(subkey);
-        printAsBlock(subkey, false);
+        printAsBlock(subkey, true);
         // System.out.println();
     }
 
@@ -361,7 +427,7 @@ public class iBSV {
         String sd = Convert.toHexString(buf, 16, 48);
 
         System.out.print("ID: 0x" + id + " | " + "transmitted-pw: 0x" + ps + " ");
-        System.out.println("[" + hexToAscii(sd)+ "]");
+        System.out.println("[" + hexToAscii(sd) + "]");
         System.out.println("     '" + hexToAscii(id) + "' | '" + hexToAscii(ps) + "'");
     }
 
@@ -387,6 +453,26 @@ public class iBSV {
         System.out.println("reInitalizing scratchpad...");
         Arrays.fill(buf, (byte) 'U');
         odc.writeScratchpad(00, buf);
+    }
+
+    private static void setDSPortAdapter() {
+        try {
+            dsportadapter = OneWireAccessProvider.getDefaultAdapter();
+        } catch (OneWireException e) {
+            System.out.println(e + " adapter unchanged");
+            e.printStackTrace();
+        }
+    }
+
+    private static DSPortAdapter getDSPortAdapter() {
+        try {
+            while (!dsportadapter.adapterDetected()) {
+                setDSPortAdapter();
+            }
+        } catch (OneWireException e) {
+            e.printStackTrace();
+        }
+        return dsportadapter;
     }
 
     private static Boolean confirmChoice(String msg) {
